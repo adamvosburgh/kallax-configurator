@@ -24,6 +24,17 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
   const scaleY = part.thicknessIn * 0.1;
   const scaleZ = part.widthIn * 0.1;
   
+  // Rotation for parts that need to be oriented differently
+  const getRotation = (): [number, number, number] => {
+    if (part.role === 'Side' || part.role === 'VerticalDivider') {
+      return [0, 0, Math.PI / 2]; // 90 degrees around Z-axis
+    }
+    if (part.role === 'Back' || part.role === 'Door') {
+      return [Math.PI / 2, 0, 0]; // 90 degrees around X-axis to make height vertical
+    }
+    return [0, 0, 0];
+  };
+
   // Color based on part role
   const getColor = () => {
     if (isSelected) return '#3b82f6'; // blue
@@ -50,6 +61,7 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
   return (
     <mesh
       position={position}
+      rotation={getRotation()}
       scale={[scaleX, scaleY, scaleZ]}
       onPointerEnter={(e) => {
         setHovered(true);
