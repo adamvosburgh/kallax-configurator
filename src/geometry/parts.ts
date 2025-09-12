@@ -1,5 +1,6 @@
 import type { DesignParams, Part } from './types';
 import { calculateLayout, calculateDimensions } from './layout';
+import { calculateBayWidth as calculateBayWidthFromMeasurements, calculateSideHeight } from './measurements';
 
 /**
  * Generate a stable part ID based on role and parameters
@@ -13,6 +14,7 @@ function generatePartId(role: string, index?: number, suffix?: string): string {
 
 /**
  * Calculate bay width for a span of modules
+ * @deprecated - Use calculateBayWidthFromMeasurements
  */
 function calculateBayWidth(
   colStart: number, 
@@ -21,7 +23,7 @@ function calculateBayWidth(
   frameThickness: number
 ): number {
   const moduleCount = colEnd - colStart;
-  return moduleCount * interiorClearance + (moduleCount - 1) * frameThickness;
+  return calculateBayWidthFromMeasurements(moduleCount, interiorClearance, frameThickness);
 }
 
 /**
@@ -124,7 +126,7 @@ export function generateParts(params: DesignParams): Part[] {
   });
 
   // Side pieces (left and right)
-  const sideHeight = dimensions.extHeight - 2 * frameThickness;
+  const sideHeight = calculateSideHeight(dimensions.extHeight, frameThickness);
   parts.push({
     id: generatePartId('Side', 0, 'L'),
     role: 'Side',
@@ -145,23 +147,23 @@ export function generateParts(params: DesignParams): Part[] {
     notes: 'Right side, runs between top/bottom',
   });
 
-  // Interior vertical dividers
-  const presentVerticals = Array.from(layout.presentVerticals).sort((a, b) => a - b);
-  let dividerIndex = 0;
-  
-  for (const col of presentVerticals) {
-    if (col > 0 && col < cols) { // Skip sides (already handled)
-      parts.push({
-        id: generatePartId('VDiv', dividerIndex),
-        role: 'VerticalDivider',
-        qty: 1,
-        lengthIn: sideHeight,
-        widthIn: depthInches,
-        thicknessIn: frameThickness,
-        notes: `Interior vertical at column ${col}, full height`,
-      });
-      dividerIndex++;
-    }
+  // Interior vertical divider segments
+  for (const segment of layout.verticalSegments) {
+    parts.push({
+      id: generatePartId('VDiv', segment.column, `R${segment.rowStart}to${segment.rowEnd}`),
+      role: 'VerticalDivider',
+      qty: 1,
+      lengthIn: segment.lengthIn,
+      widthIn: depthInches,
+      thicknessIn: frameThickness,
+      notes: `Vertical segment at column ${segment.column}, rows ${segment.rowStart}-${segment.rowEnd}`,
+      bay: {
+        row: segment.rowStart,
+        colStart: segment.column,
+        colEnd: segment.column,
+        rowEnd: segment.rowEnd,
+      },
+    });
   }
 
   // Bay shelves (interior horizontals)
@@ -188,6 +190,9 @@ export function generateParts(params: DesignParams): Part[] {
       },
     });
   }
+
+  // Extended shelves are no longer needed - regular bay shelves now automatically 
+  // span horizontal merges since interior verticals were removed
 
   // Back panel
   if (hasBack && materials.back) {
@@ -235,6 +240,12 @@ export function generateParts(params: DesignParams): Part[] {
         widthIn: doorHeight,
         thicknessIn: doorThickness,
         notes: doorNotes,
+        bay: {
+          row: opening.row,
+          colStart: opening.col,
+          colEnd: opening.col + opening.width,
+          rowEnd: opening.row + opening.height,
+        },
       });
       doorIndex++;
     }

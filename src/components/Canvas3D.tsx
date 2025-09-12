@@ -4,6 +4,17 @@ import { OrbitControls, Html } from '@react-three/drei';
 import { useDesignStore } from '../state/useDesignStore';
 import type { Part } from '../geometry/types';
 import { PartHoverCard } from './PartHoverCard';
+import {
+  calculateBottomPosition,
+  calculateTopPosition,
+  calculateLeftSidePosition,
+  calculateRightSidePosition,
+  calculateBackPosition,
+  calculateBayShelfPosition,
+  calculateDoorPosition,
+  calculateVerticalDividerPosition,
+  calculateVerticalDividerSegmentPosition
+} from '../geometry/measurements';
 import * as THREE from 'three';
 
 interface PartMeshProps {
@@ -84,7 +95,7 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
 }
 
 function Scene() {
-  const { analysis, dimensions } = useDesignStore();
+  const { analysis, dimensions, params } = useDesignStore();
   const [hoveredPart, setHoveredPart] = useState<Part | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   
@@ -96,38 +107,95 @@ function Scene() {
       // Get screen coordinates for hover card
       const mouseEvent = event as any; // Three.js event doesn't have proper typing for mouse events
       if (mouseEvent.clientX && mouseEvent.clientY) {
-        const canvas = event.target as HTMLElement;
-        const rect = canvas.getBoundingClientRect();
-        setMousePos({
-          x: mouseEvent.clientX - rect.left,
-          y: mouseEvent.clientY - rect.top,
-        });
+        // Find the canvas element in the DOM
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect();
+          setMousePos({
+            x: mouseEvent.clientX - rect.left,
+            y: mouseEvent.clientY - rect.top,
+          });
+        }
       }
     }
   };
   
   // Position parts in 3D space
   const getPartPosition = (part: Part): [number, number, number] => {
-    const scaleX = 0.1;
-    const scaleY = 0.1;
-    const scaleZ = 0.1;
+    const frameThickness = params.materials.frame.actualInches;
     
     switch (part.role) {
       case 'Bottom':
-        return [0, -dimensions.extHeight * scaleY / 2, 0];
+        return calculateBottomPosition(dimensions.extHeight, frameThickness);
       case 'Top':
-        return [0, dimensions.extHeight * scaleY / 2, 0];
+        return calculateTopPosition(dimensions.extHeight, frameThickness);
       case 'Side':
         if (part.id.includes('L')) {
-          return [-dimensions.extWidth * scaleX / 2, 0, 0];
+          return calculateLeftSidePosition(dimensions.extWidth, frameThickness);
         } else {
-          return [dimensions.extWidth * scaleX / 2, 0, 0];
+          return calculateRightSidePosition(dimensions.extWidth, frameThickness);
         }
       case 'Back':
-        return [0, 0, -dimensions.extDepth * scaleZ / 2];
+        return calculateBackPosition(dimensions.extDepth);
+      case 'BayShelf':
+        if (part.bay) {
+          return calculateBayShelfPosition(
+            part.bay,
+            params.rows,
+            params.cols,
+            params.interiorClearanceInches,
+            frameThickness,
+            dimensions.extWidth,
+            dimensions.extHeight
+          );
+        }
+        return [0, 0, 0];
+      case 'Door':
+        if (part.bay) {
+          const doorThickness = params.materials.door?.actualInches || 0.75;
+          return calculateDoorPosition(
+            part.bay,
+            params.rows,
+            params.cols,
+            params.interiorClearanceInches,
+            frameThickness,
+            dimensions.extWidth,
+            dimensions.extHeight,
+            params.doorMode,
+            doorThickness,
+            params.depthInches
+          );
+        }
+        return [0, 0, 0];
+      case 'VerticalDivider':
+        if (part.bay && part.bay.rowEnd !== undefined) {
+          // Segmented vertical divider
+          const columnIndex = part.bay.colStart;
+          return calculateVerticalDividerSegmentPosition(
+            columnIndex,
+            part.bay.row,
+            part.bay.rowEnd,
+            part.lengthIn,
+            params.cols,
+            params.rows,
+            params.interiorClearanceInches,
+            frameThickness,
+            dimensions.extWidth,
+            dimensions.extHeight
+          );
+        } else {
+          // Extract column index from notes (fallback)
+          const columnMatch = part.notes?.match(/column (\d+)/);
+          const columnIndex = columnMatch ? parseInt(columnMatch[1], 10) : 1;
+          return calculateVerticalDividerPosition(
+            columnIndex,
+            params.cols,
+            params.interiorClearanceInches,
+            frameThickness,
+            dimensions.extWidth
+          );
+        }
       default:
-        // For other parts, position them roughly in the center for now
-        // In a more sophisticated implementation, we'd calculate exact positions
         return [0, 0, 0];
     }
   };

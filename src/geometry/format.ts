@@ -18,7 +18,16 @@ export function toFraction32(valueInches: number): string {
   }
   
   // Simplify the fraction
-  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+  const gcd = (a: number, b: number): number => {
+    a = Math.abs(a);
+    b = Math.abs(b);
+    while (b !== 0) {
+      const temp = b;
+      b = a % b;
+      a = temp;
+    }
+    return a;
+  };
   const divisor = gcd(thirtySeconds, 32);
   const numerator = thirtySeconds / divisor;
   const denominator = 32 / divisor;

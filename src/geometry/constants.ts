@@ -1,15 +1,12 @@
 import type { NominalThickness, ThicknessMap, DesignParams } from './types';
+import { THICKNESS_MAP as THICKNESS_VALUES } from './measurements';
 
-// Default Kallax dimensions (inches)
+// Default Kallax dimensions (inches) - these are user-configurable defaults
 export const DEFAULT_INTERIOR_CLEARANCE = 13.25;
 export const DEFAULT_DEPTH = 15.375;
 
-// Nominal to actual thickness mapping (standard plywood)
-export const THICKNESS_MAP: Record<NominalThickness, number> = {
-  '1/4"': 7/32,    // 0.21875
-  '1/2"': 15/32,   // 0.46875
-  '3/4"': 23/32,   // 0.71875
-};
+// Nominal to actual thickness mapping (standard plywood) - imported from measurements
+export const THICKNESS_MAP: Record<NominalThickness, number> = THICKNESS_VALUES;
 
 export const createThicknessMap = (nominal: NominalThickness): ThicknessMap => ({
   nominal,

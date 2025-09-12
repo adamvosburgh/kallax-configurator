@@ -56,6 +56,20 @@ export interface Part {
   bay?: { row: number; colStart: number; colEnd: number };
 }
 
+export interface VerticalSegment {
+  column: number;
+  rowStart: number;
+  rowEnd: number;
+  lengthIn: number;
+}
+
+export interface ExtendedShelf {
+  row: number;
+  colStart: number;
+  colEnd: number;
+  lengthIn: number;
+}
+
 export interface LayoutInfo {
   presentVerticals: Set<number>;
   horizontalSegments: Array<{
@@ -63,6 +77,8 @@ export interface LayoutInfo {
     colStart: number;
     colEnd: number;
   }>;
+  verticalSegments: VerticalSegment[];
+  extendedShelves: ExtendedShelf[];
 }
 
 export interface DerivedDimensions {

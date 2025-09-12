@@ -1,4 +1,5 @@
-import type { DesignParams, MergeSpec, LayoutInfo, DerivedDimensions } from './types';
+import type { DesignParams, MergeSpec, LayoutInfo, DerivedDimensions, VerticalSegment, ExtendedShelf } from './types';
+import { calculateAllDimensions, calculateSideHeight, calculateBayWidth } from './measurements';
 
 // Re-export for convenience
 export type { DerivedDimensions } from './types';
@@ -55,10 +56,12 @@ function calculatePresentVerticals(rows: number, cols: number, merges: MergeSpec
 }
 
 /**
- * Calculate horizontal shelf segments between present verticals
+ * Calculate horizontal shelf segments, considering both vertical merges (delete shelves) 
+ * and horizontal merges (extend shelves across merged areas)
  */
 function calculateHorizontalSegments(
   rows: number, 
+  cols: number,
   merges: MergeSpec[], 
   presentVerticals: Set<number>
 ): Array<{ row: number; colStart: number; colEnd: number }> {
@@ -66,38 +69,203 @@ function calculateHorizontalSegments(
   
   // For each row boundary (between rows)
   for (let r = 1; r < rows; r++) {
-    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
+    // Find horizontal merges that affect this row boundary
+    // A horizontal merge affects a row boundary if it's either:
+    // 1. In the row above the boundary (merge.r0 <= r-1 && merge.r1 >= r-1)
+    // 2. In the row below the boundary (merge.r0 <= r && merge.r1 >= r)
+    const horizontalMergesAtRow = merges.filter(merge => 
+      merge.c1 > merge.c0 && // spans multiple columns (is horizontal)
+      ((merge.r0 <= r - 1 && merge.r1 >= r - 1) || // merge in row above boundary
+       (merge.r0 <= r && merge.r1 >= r)) // merge in row below boundary
+    );
     
-    // Create segments between consecutive present verticals
-    for (let i = 0; i < verticalCols.length - 1; i++) {
-      const colStart = verticalCols[i];
-      const colEnd = verticalCols[i + 1];
-      
-      // Check if there's a vertical merge across this row boundary for this bay
+    // For each horizontal merge at this row, create an extended shelf segment
+    for (const merge of horizontalMergesAtRow) {
+      // Check if there's a vertical merge that would eliminate this shelf
       let hasVerticalMerge = false;
-      
-      for (let c = colStart; c < colEnd; c++) {
-        const upperRow = r - 1;
-        const lowerRow = r;
-        
-        if (areCellsMerged(upperRow, c, lowerRow, c, merges)) {
+      for (let c = merge.c0; c <= merge.c1; c++) {
+        if (areCellsMerged(r - 1, c, r, c, merges)) {
           hasVerticalMerge = true;
           break;
         }
       }
       
-      // Only add shelf segment if there's no vertical merge
       if (!hasVerticalMerge) {
+        // Create a shelf segment that spans exactly the merged area
+        // Find the nearest present verticals that bracket this merge
+        const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
+        const startCol = verticalCols.findLast(col => col <= merge.c0) || 0;
+        const endCol = verticalCols.find(col => col > merge.c1) || cols;
+        
         segments.push({
           row: r,
-          colStart,
-          colEnd,
+          colStart: startCol,
+          colEnd: endCol,
         });
+      }
+    }
+    
+    // For areas without horizontal merges, create normal segments between verticals
+    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
+    for (let i = 0; i < verticalCols.length - 1; i++) {
+      const colStart = verticalCols[i];
+      const colEnd = verticalCols[i + 1];
+      
+      // Check if this area overlaps with any horizontal merge shelf
+      // If there's any overlap, skip this normal segment to avoid duplicates
+      const overlapsWithMerge = horizontalMergesAtRow.some(merge => {
+        // Find the shelf boundaries for this merge
+        const mergeStartCol = verticalCols.findLast(col => col <= merge.c0) || 0;
+        const mergeEndCol = verticalCols.find(col => col > merge.c1) || cols;
+        
+        // Check if this normal segment overlaps with the merge shelf
+        return !(colEnd <= mergeStartCol || colStart >= mergeEndCol);
+      });
+      
+      if (!overlapsWithMerge) {
+        // Check if there's a vertical merge across this row boundary
+        let hasVerticalMerge = false;
+        for (let c = colStart; c < colEnd; c++) {
+          if (areCellsMerged(r - 1, c, r, c, merges)) {
+            hasVerticalMerge = true;
+            break;
+          }
+        }
+        
+        // Only add shelf segment if there's no vertical merge
+        if (!hasVerticalMerge) {
+          segments.push({
+            row: r,
+            colStart,
+            colEnd,
+          });
+        }
       }
     }
   }
   
   return segments;
+}
+
+/**
+ * Calculate vertical divider segments based on horizontal merges
+ */
+function calculateVerticalSegments(
+  rows: number, 
+  cols: number, 
+  merges: MergeSpec[], 
+  presentVerticals: Set<number>,
+  frameThickness: number,
+  interiorClearanceInches: number
+): VerticalSegment[] {
+  const segments: VerticalSegment[] = [];
+  
+  for (const col of presentVerticals) {
+    if (col === 0 || col === cols) continue; // Skip sides - they're handled separately
+    
+    // Find all horizontal merges that cross this column boundary
+    const crossingMerges = merges.filter(merge => 
+      merge.c0 < col && merge.c1 >= col
+    );
+    
+    if (crossingMerges.length === 0) {
+      // No horizontal merges cross this column - full height divider
+      const fullHeight = calculateSideHeight(
+        rows * interiorClearanceInches + (rows + 1) * frameThickness,
+        frameThickness
+      );
+      segments.push({
+        column: col,
+        rowStart: 0,
+        rowEnd: rows,
+        lengthIn: fullHeight
+      });
+    } else {
+      // Create segments around horizontal merges
+      const mergeRows = new Set<number>();
+      crossingMerges.forEach(merge => {
+        for (let r = merge.r0; r <= merge.r1; r++) {
+          mergeRows.add(r);
+        }
+      });
+      
+      // Create segments for non-merged rows
+      let segmentStart = 0;
+      for (let r = 0; r <= rows; r++) {
+        if (mergeRows.has(r) || r === rows) {
+          if (r > segmentStart) {
+            const segmentHeight = (r - segmentStart) * interiorClearanceInches + 
+                                 (r - segmentStart - 1) * frameThickness;
+            if (segmentHeight > 0) {
+              segments.push({
+                column: col,
+                rowStart: segmentStart,
+                rowEnd: r,
+                lengthIn: segmentHeight
+              });
+            }
+          }
+          segmentStart = r + 1;
+        }
+      }
+    }
+  }
+  
+  return segments;
+}
+
+/**
+ * Calculate extended shelves that span across horizontal merges
+ */
+function calculateExtendedShelves(
+  rows: number,
+  cols: number,
+  merges: MergeSpec[],
+  presentVerticals: Set<number>,
+  frameThickness: number,
+  interiorClearanceInches: number
+): ExtendedShelf[] {
+  const extendedShelves: ExtendedShelf[] = [];
+  
+  // For each row boundary (potential shelf location)
+  for (let r = 1; r < rows; r++) {
+    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
+    
+    // Check for horizontal merges that affect this shelf row
+    const affectingMerges = merges.filter(merge => 
+      (merge.r0 < r && merge.r1 >= r) || (merge.r0 <= r && merge.r1 > r)
+    );
+    
+    if (affectingMerges.length > 0) {
+      // Create extended shelves that span across merges
+      for (let i = 0; i < verticalCols.length - 1; i++) {
+        const colStart = verticalCols[i];
+        const colEnd = verticalCols[i + 1];
+        
+        // Check if this span crosses any horizontal merges
+        const spanningMerge = affectingMerges.find(merge =>
+          colStart >= merge.c0 && colEnd <= merge.c1 + 1
+        );
+        
+        if (spanningMerge) {
+          const shelfLength = calculateBayWidth(
+            colEnd - colStart,
+            interiorClearanceInches,
+            frameThickness
+          );
+          
+          extendedShelves.push({
+            row: r,
+            colStart,
+            colEnd,
+            lengthIn: shelfLength
+          });
+        }
+      }
+    }
+  }
+  
+  return extendedShelves;
 }
 
 /**
@@ -107,31 +275,37 @@ export function calculateLayout(params: DesignParams): LayoutInfo {
   const presentVerticals = calculatePresentVerticals(params.rows, params.cols, params.merges);
   const horizontalSegments = calculateHorizontalSegments(
     params.rows, 
+    params.cols,
     params.merges, 
     presentVerticals
   );
   
+  const frameThickness = params.materials.frame.actualInches;
+  const verticalSegments = calculateVerticalSegments(
+    params.rows,
+    params.cols,
+    params.merges,
+    presentVerticals,
+    frameThickness,
+    params.interiorClearanceInches
+  );
+  
+  // Extended shelves are no longer needed - regular segments now span horizontal merges
+  // since interior verticals were removed by calculatePresentVerticals
+  const extendedShelves: ExtendedShelf[] = [];
+  
   return {
     presentVerticals,
     horizontalSegments,
+    verticalSegments,
+    extendedShelves,
   };
 }
 
 /**
  * Calculate exterior dimensions
+ * @deprecated - Use the centralized calculateAllDimensions from measurements.ts
  */
 export function calculateDimensions(params: DesignParams): DerivedDimensions {
-  const { rows, cols, interiorClearanceInches, depthInches, hasBack, materials } = params;
-  const frameThickness = materials.frame.actualInches;
-  const backThickness = materials.back?.actualInches || 0;
-  
-  const extWidth = cols * interiorClearanceInches + (cols + 1) * frameThickness;
-  const extHeight = rows * interiorClearanceInches + (rows + 1) * frameThickness;
-  const extDepth = depthInches + (hasBack ? backThickness : 0);
-  
-  return {
-    extWidth,
-    extHeight,
-    extDepth,
-  };
+  return calculateAllDimensions(params);
 }
