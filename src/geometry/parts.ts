@@ -226,7 +226,7 @@ export function generateParts(params: DesignParams): Part[] {
         doorHeight = openingHeight - 2 * reveal;
         doorNotes = `Inset door with ${reveal}" reveal`;
       } else {
-        const overlay = doorMode.overlayInches || 0.5;
+        const overlay = doorMode.overlayInches || 0.25;
         doorWidth = openingWidth + 2 * overlay;
         doorHeight = openingHeight + 2 * overlay;
         doorNotes = `Overlay door with ${overlay}" overlay`;

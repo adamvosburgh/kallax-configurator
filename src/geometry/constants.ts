@@ -31,7 +31,7 @@ export const DEFAULT_DESIGN: DesignParams = {
   doorMode: {
     type: 'inset',
     revealInches: 1/16, // 0.0625"
-    overlayInches: 0.5,
+    overlayInches: 0.25,
   },
   materials: {
     frame: RECOMMENDED_MATERIALS.frame,

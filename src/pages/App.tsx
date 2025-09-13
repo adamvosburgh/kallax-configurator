@@ -6,7 +6,21 @@ import { ExportPanel } from '../components/ExportPanel';
 import { useDesignStore } from '../state/useDesignStore';
 
 export function App() {
-  const { importDesign } = useDesignStore();
+  const store = useDesignStore();
+  const { importDesign, _hasHydrated } = store;
+
+  // Handle first-time users and ensure hydration is complete
+  useEffect(() => {
+    // Set a timeout to handle cases where onRehydrateStorage never fires
+    // (happens when there's no persisted data for new users)
+    const timeout = setTimeout(() => {
+      if (!useDesignStore.getState()._hasHydrated) {
+        useDesignStore.setState({ _hasHydrated: true });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Handle URL-based design sharing
   useEffect(() => {
@@ -61,7 +75,16 @@ export function App() {
           
           {/* Center - 3D Preview */}
           <div className="flex-1 min-w-0 relative">
-            <Canvas3D />
+            {_hasHydrated ? (
+              <Canvas3D />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-gray-50">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <div className="text-sm text-gray-500">Loading configuration...</div>
+                </div>
+              </div>
+            )}
             
             {/* Floating overlay with basic info */}
             <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 text-xs shadow-lg">

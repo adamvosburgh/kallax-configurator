@@ -229,8 +229,8 @@ export function ControlsPanel() {
                 <input
                   type="number"
                   step="0.125"
-                  value={params.doorMode.overlayInches || 0.5}
-                  onChange={(e) => setDoorOverlay(parseFloat(e.target.value) || 0.5)}
+                  value={params.doorMode.overlayInches || 0.25}
+                  onChange={(e) => setDoorOverlay(parseFloat(e.target.value) || 0.25)}
                   className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                 />
               </div>

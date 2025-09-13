@@ -18,6 +18,7 @@ interface DesignStore {
   // UI state
   selectedPartId: string | null;
   hoveredPartId: string | null;
+  _hasHydrated: boolean;
   
   // Actions
   updateParams: (updates: Partial<DesignParams>) => void;
@@ -68,6 +69,7 @@ export const useDesignStore = create<DesignStore>()(
       ...computeDerivedData(DEFAULT_DESIGN),
       selectedPartId: null,
       hoveredPartId: null,
+      _hasHydrated: false,
       
       // Core parameter updates
       updateParams: (updates) => {
@@ -252,6 +254,30 @@ export const useDesignStore = create<DesignStore>()(
     {
       name: 'kallax-design-storage',
       partialize: (state) => ({ params: state.params }),
+      onRehydrateStorage: () => {
+        return (state, error) => {
+          if (error) {
+            console.error('Failed to rehydrate store:', error);
+            // Still set as hydrated even on error to prevent infinite loading
+            if (state) state._hasHydrated = true;
+            return;
+          }
+          
+          if (state) {
+            // Recompute derived data after rehydration
+            const derived = computeDerivedData(state.params);
+            state.analysis = derived.analysis;
+            state.dimensions = derived.dimensions;
+            
+            // Reset UI state
+            state.selectedPartId = null;
+            state.hoveredPartId = null;
+            state._hasHydrated = true;
+          }
+        };
+      },
+      // Handle the case where there's no persisted data (new users)
+      skipHydration: false,
     }
   )
 );

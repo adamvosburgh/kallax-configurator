@@ -182,7 +182,7 @@ export function calculateVerticalDividerSegmentPosition(
   
   // Calculate Y position based on the segment center
   const segmentCenter = (rowStart + rowEnd) / 2;
-  const segmentYFromTop = segmentCenter * (interiorClearanceInches + frameThickness) + frameThickness;
+  const segmentYFromTop = segmentCenter * (interiorClearanceInches + frameThickness) + (frameThickness /2);
   const yOffset = (extHeight / 2) - segmentYFromTop;
   
   return [xOffset * SCENE_SCALE, yOffset * SCENE_SCALE, 0];
