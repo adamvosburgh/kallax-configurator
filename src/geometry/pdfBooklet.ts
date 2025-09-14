@@ -3,6 +3,7 @@ import type { Part, DesignParams } from './types';
 import { generateAssemblySteps } from './svgDiagrams';
 import { toFraction32, formatDimensions } from './format';
 import { calculateDimensions } from './layout';
+import { svgToPng, getSvgDimensions } from '../lib/svgToImage';
 
 export async function generatePDFBooklet(
   parts: Part[], 
@@ -149,11 +150,11 @@ export async function generatePDFBooklet(
   
   // Assembly Steps Pages
   const assemblySteps = generateAssemblySteps(parts);
-  
+
   for (const step of assemblySteps) {
     const stepPage = addPage();
     yPos = pageHeight - margin;
-    
+
     // Step title
     stepPage.drawText(`Step ${step.stepNumber}: ${step.title}`, {
       x: margin,
@@ -162,7 +163,7 @@ export async function generatePDFBooklet(
       font: helveticaBoldFont,
     });
     yPos -= 40;
-    
+
     // Description
     stepPage.drawText(step.description, {
       x: margin,
@@ -171,7 +172,7 @@ export async function generatePDFBooklet(
       font: helveticaFont,
     });
     yPos -= 40;
-    
+
     // Parts for this step
     stepPage.drawText('Parts needed:', {
       x: margin,
@@ -180,7 +181,7 @@ export async function generatePDFBooklet(
       font: helveticaBoldFont,
     });
     yPos -= 20;
-    
+
     for (const part of step.parts) {
       stepPage.drawText(`• ${part.id} (${part.role})`, {
         x: margin + 10,
@@ -190,26 +191,55 @@ export async function generatePDFBooklet(
       });
       yPos -= 15;
     }
-    
-    // Note: In a full implementation, we would embed the SVG as an image
-    // For now, we'll just add a placeholder box
+
+    // Embed the actual SVG diagram as PNG
     yPos -= 20;
-    stepPage.drawRectangle({
-      x: margin,
-      y: yPos - 200,
-      width: contentWidth,
-      height: 200,
-      borderColor: rgb(0.8, 0.8, 0.8),
-      borderWidth: 1,
-    });
-    
-    stepPage.drawText('[Assembly Diagram]', {
-      x: margin + contentWidth/2 - 60,
-      y: yPos - 100,
-      size: 14,
-      font: helveticaFont,
-      color: rgb(0.6, 0.6, 0.6),
-    });
+    try {
+      // Get SVG dimensions
+      const svgDims = getSvgDimensions(step.svg);
+
+      // Convert SVG to PNG
+      const pngBytes = await svgToPng(step.svg, {
+        width: svgDims.width,
+        height: svgDims.height,
+        scale: 2 // Higher resolution for PDF
+      });
+
+      // Embed the PNG in the PDF
+      const pngImage = await pdfDoc.embedPng(pngBytes);
+      const pngDims = pngImage.scale(0.8); // Scale down to fit nicely
+
+      // Calculate position to center the image
+      const imageX = margin + (contentWidth - pngDims.width) / 2;
+      const imageY = yPos - pngDims.height;
+
+      stepPage.drawImage(pngImage, {
+        x: imageX,
+        y: imageY,
+        width: pngDims.width,
+        height: pngDims.height,
+      });
+    } catch (error) {
+      console.warn('Failed to embed diagram for step', step.stepNumber, error);
+
+      // Fallback to placeholder if image conversion fails
+      stepPage.drawRectangle({
+        x: margin,
+        y: yPos - 200,
+        width: contentWidth,
+        height: 200,
+        borderColor: rgb(0.8, 0.8, 0.8),
+        borderWidth: 1,
+      });
+
+      stepPage.drawText('[Diagram unavailable]', {
+        x: margin + contentWidth/2 - 70,
+        y: yPos - 100,
+        size: 14,
+        font: helveticaFont,
+        color: rgb(0.6, 0.6, 0.6),
+      });
+    }
   }
   
   const pdfBytes = await pdfDoc.save();
