@@ -36,10 +36,44 @@ export interface SheetLayout {
   utilization: number; // percentage of sheet used
 }
 
+export interface OversizedPart {
+  part: Part;
+  reason: string; // why it doesn't fit
+}
+
+export interface SheetLayoutResult {
+  sheets: SheetLayout[];
+  oversizedParts: OversizedPart[];
+}
+
 interface ProcessedPart extends Part {
   ripWidth: number; // the dimension to rip along
   crossCutLength: number; // the dimension to cross-cut
   rotated: boolean; // if the part was rotated for optimal ripping
+}
+
+/**
+ * Check if a part can fit on a standard 4'×8' sheet
+ */
+function canFitOnStandardSheet(part: Part): { fits: boolean; reason?: string } {
+  const length = part.lengthIn;
+  const width = part.widthIn;
+  
+  // Check if either dimension exceeds sheet dimensions
+  if (length > SHEET_WIDTH && width > SHEET_HEIGHT) {
+    return { fits: false, reason: `Part dimensions ${length.toFixed(2)}" × ${width.toFixed(2)}" exceed both sheet dimensions (48" × 96")` };
+  }
+  if (length > SHEET_HEIGHT && width > SHEET_WIDTH) {
+    return { fits: false, reason: `Part dimensions ${length.toFixed(2)}" × ${width.toFixed(2)}" exceed sheet dimensions when rotated` };
+  }
+  if (Math.max(length, width) > SHEET_HEIGHT) {
+    return { fits: false, reason: `Longest dimension ${Math.max(length, width).toFixed(2)}" exceeds sheet length (96")` };
+  }
+  if (Math.min(length, width) > SHEET_WIDTH) {
+    return { fits: false, reason: `Shortest dimension ${Math.min(length, width).toFixed(2)}" exceeds sheet width (48")` };
+  }
+  
+  return { fits: true };
 }
 
 /**
@@ -69,11 +103,26 @@ function determineRipOrientation(part: Part): { ripWidth: number; crossCutLength
 
 /**
  * Process parts to determine rip orientations and group by thickness
+ * Also separates out parts that don't fit on standard sheets
  */
-function processParts(parts: Part[]): Map<number, ProcessedPart[]> {
+function processParts(parts: Part[]): { 
+  partsByThickness: Map<number, ProcessedPart[]>;
+  oversizedParts: OversizedPart[];
+} {
   const partsByThickness = new Map<number, ProcessedPart[]>();
+  const oversizedParts: OversizedPart[] = [];
   
   for (const part of parts) {
+    // Check if part fits on standard sheet
+    const fitCheck = canFitOnStandardSheet(part);
+    if (!fitCheck.fits) {
+      oversizedParts.push({
+        part,
+        reason: fitCheck.reason!
+      });
+      continue; // Skip processing this part
+    }
+    
     const thickness = part.thicknessIn;
     const ripInfo = determineRipOrientation(part);
     
@@ -88,7 +137,7 @@ function processParts(parts: Part[]): Map<number, ProcessedPart[]> {
     partsByThickness.get(thickness)!.push(processedPart);
   }
   
-  return partsByThickness;
+  return { partsByThickness, oversizedParts };
 }
 
 /**
@@ -207,8 +256,8 @@ function packSheet(parts: ProcessedPart[], sheetId: string, thickness: number): 
 /**
  * Generate optimized sheet layouts for all parts
  */
-export function generateSheetLayouts(parts: Part[]): SheetLayout[] {
-  const partsByThickness = processParts(parts);
+export function generateSheetLayouts(parts: Part[]): SheetLayoutResult {
+  const { partsByThickness, oversizedParts } = processParts(parts);
   const sheets: SheetLayout[] = [];
   
   for (const [thickness, thicknessParts] of partsByThickness) {
@@ -230,5 +279,12 @@ export function generateSheetLayouts(parts: Part[]): SheetLayout[] {
     }
   }
   
-  return sheets;
+  return { sheets, oversizedParts };
+}
+
+/**
+ * Helper function to get just the sheets (for backward compatibility)
+ */
+export function getSheetLayouts(parts: Part[]): SheetLayout[] {
+  return generateSheetLayouts(parts).sheets;
 }
