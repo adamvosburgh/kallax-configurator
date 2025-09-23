@@ -53,7 +53,7 @@ export interface Part {
   widthIn: number;
   thicknessIn: number;
   notes?: string;
-  bay?: { row: number; colStart: number; colEnd: number };
+  bay?: { row: number; colStart: number; colEnd: number; rowEnd?: number };
 }
 
 export interface VerticalSegment {

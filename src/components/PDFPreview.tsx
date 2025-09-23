@@ -16,7 +16,7 @@ const TEST_CONFIG: DesignParams = {
   materials: {
     frame: { nominal: '3/4"', actualInches: 0.75 },
     back: { nominal: '1/4"', actualInches: 0.25 },
-    doors: { nominal: '3/4"', actualInches: 0.75 },
+    door: { nominal: '3/4"', actualInches: 0.75 },
   },
 };
 

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run build:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

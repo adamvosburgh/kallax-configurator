@@ -91,7 +91,7 @@ export function generateParts(params: DesignParams): Part[] {
   const dimensions = calculateDimensions(params);
   
   const {
-    cols,
+    cols: _cols,
     interiorClearanceInches,
     depthInches,
     hasBack,

@@ -7,7 +7,7 @@ import type { SheetLayout, OversizedPart } from './ripGenerator';
 
 // SVG dimensions and styling - tight around content
 const MARGIN = 40; // Minimal margin
-const TITLE_SPACE = 20; // Space for sheet title at top
+const TITLE_SPACE = 10; // Space for sheet title at top
 const DIMENSION_SPACE = 20; // Space for dimension text at bottom
 const SHEET_RATIO = 48 / 96; // 4' x 8' sheet (width/height)
 
@@ -78,10 +78,57 @@ export function generateSheetSvg(sheet: SheetLayout): string {
     // Part rectangle
     elements.push(`<rect x="${x}" y="${y}" width="${width}" height="${height}" class="part-rect" />`);
     
-    // Part label
+    // Part label with text wrapping
     const centerX = x + width / 2;
     const centerY = y + height / 2;
-    elements.push(`<text x="${centerX}" y="${centerY}" class="part-text">${part.partId}</text>`);
+    
+    // Wrap text if needed
+    const maxCharsPerLine = Math.floor(width / 6); // Approximate character width
+    const partId = part.partId;
+    
+    if (partId.length <= maxCharsPerLine) {
+      // Single line
+      elements.push(`<text x="${centerX}" y="${centerY}" class="part-text">${partId}</text>`);
+    } else {
+      // Multi-line text
+      const words = partId.split(/[-_]/); // Split on common separators
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine + (currentLine ? '-' : '') + word;
+        if (testLine.length <= maxCharsPerLine) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      
+      // If we still have long lines, force break them
+      const finalLines: string[] = [];
+      for (const line of lines) {
+        if (line.length <= maxCharsPerLine) {
+          finalLines.push(line);
+        } else {
+          // Force break long lines
+          for (let i = 0; i < line.length; i += maxCharsPerLine) {
+            finalLines.push(line.substr(i, maxCharsPerLine));
+          }
+        }
+      }
+      
+      // Center the multi-line text
+      const lineHeight = 12;
+      const totalHeight = finalLines.length * lineHeight;
+      const startY = centerY - (totalHeight / 2) + (lineHeight / 2);
+      
+      finalLines.forEach((line, index) => {
+        const lineY = startY + (index * lineHeight);
+        elements.push(`<text x="${centerX}" y="${lineY}" class="part-text">${line}</text>`);
+      });
+    }
   }
   
   // Rip cut lines and dimensions
@@ -167,18 +214,26 @@ export function generateTestSheetSvg(): string {
 }
 
 /**
- * Generate SVG for oversized parts that don't fit standard sheets
+ * Generate simplified SVG for oversized parts (just the part rectangle, no text)
  */
 export function generateOversizedPartSvg(oversizedPart: OversizedPart): string {
   const part = oversizedPart.part;
   
-  // Calculate dimensions for the part rectangle
-  const partWidth = Math.min(part.widthIn, 48) * 4; // Scale down for display
-  const partLength = Math.min(part.lengthIn, 96) * 2; // Scale down for display
+  // Calculate dimensions for the part rectangle with proportional scaling
+  const maxDisplayWidth = 200; // Maximum display width
+  const maxDisplayHeight = 200; // Reduced height since we're removing text
   
-  // SVG dimensions based on content
-  const svgWidth = partWidth + 2 * MARGIN;
-  const svgHeight = partLength + 2 * MARGIN + TITLE_SPACE + DIMENSION_SPACE;
+  // Calculate scale to fit within display bounds while maintaining aspect ratio
+  const scaleX = maxDisplayWidth / part.widthIn;
+  const scaleY = maxDisplayHeight / part.lengthIn;
+  const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+  
+  const partWidth = part.widthIn * scale;
+  const partLength = part.lengthIn * scale;
+  
+  // SVG dimensions based on content (minimal margins, no text space)
+  const svgWidth = partWidth + 2 * 20; // Smaller margins
+  const svgHeight = partLength + 2 * 20; // Smaller margins
   
   const elements: string[] = [];
   
@@ -189,32 +244,21 @@ export function generateOversizedPartSvg(oversizedPart: OversizedPart): string {
   elements.push(`
     <defs>
       <style>
-        .oversized-outline { fill: #fee; stroke: #f00; stroke-width: 2; stroke-dasharray: 10,5; }
-        .oversized-text { font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; dominant-baseline: middle; fill: #c00; font-weight: bold; }
-        .oversized-label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #c00; }
-        .dimension-text { font-family: Arial, sans-serif; font-size: 9px; text-anchor: middle; fill: #666; }
+        .part-rect { fill: #f0f0f0; stroke: #000; stroke-width: 1; }
+        .part-text { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; dominant-baseline: middle; }
       </style>
     </defs>
   `);
   
   // Part outline
-  const partX = MARGIN;
-  const partY = MARGIN + TITLE_SPACE;
-  elements.push(`<rect x="${partX}" y="${partY}" width="${partWidth}" height="${partLength}" class="oversized-outline" />`);
+  const partX = 20;
+  const partY = 20;
+  elements.push(`<rect x="${partX}" y="${partY}" width="${partWidth}" height="${partLength}" class="part-rect" />`);
   
-  // Title
-  elements.push(`<text x="${partX}" y="${partY - 10}" class="oversized-label">Does Not Fit</text>`);
-  
-  // Part label in center
+  // Part label in center (just the part ID)
   const centerX = partX + partWidth / 2;
   const centerY = partY + partLength / 2;
-  elements.push(`<text x="${centerX}" y="${centerY - 10}" class="oversized-text">${part.id}</text>`);
-  elements.push(`<text x="${centerX}" y="${centerY + 10}" class="oversized-text">${part.lengthIn.toFixed(2)}" × ${part.widthIn.toFixed(2)}"</text>`);
-  
-  // Dimensions at bottom
-  const dimY = partY + partLength + 15;
-  elements.push(`<text x="${centerX}" y="${dimY}" class="dimension-text">Actual: ${part.lengthIn.toFixed(2)}" × ${part.widthIn.toFixed(2)}" × ${part.thicknessIn.toFixed(2)}"</text>`);
-  elements.push(`<text x="${centerX}" y="${dimY + 12}" class="dimension-text">${oversizedPart.reason}</text>`);
+  elements.push(`<text x="${centerX}" y="${centerY}" class="part-text">${part.id}</text>`);
   
   // Close SVG
   elements.push('</svg>');

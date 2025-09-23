@@ -1,5 +1,5 @@
 import type { DesignParams, MergeSpec, LayoutInfo, DerivedDimensions, VerticalSegment, ExtendedShelf } from './types';
-import { calculateAllDimensions, calculateSideHeight, calculateBayWidth } from './measurements';
+import { calculateAllDimensions, calculateSideHeight } from './measurements';
 
 // Re-export for convenience
 export type { DerivedDimensions } from './types';
@@ -94,7 +94,7 @@ function calculateHorizontalSegments(
         // Create a shelf segment that spans exactly the merged area
         // Find the nearest present verticals that bracket this merge
         const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
-        const startCol = verticalCols.findLast(col => col <= merge.c0) || 0;
+        const startCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
         const endCol = verticalCols.find(col => col > merge.c1) || cols;
         
         segments.push({
@@ -115,7 +115,7 @@ function calculateHorizontalSegments(
       // If there's any overlap, skip this normal segment to avoid duplicates
       const overlapsWithMerge = horizontalMergesAtRow.some(merge => {
         // Find the shelf boundaries for this merge
-        const mergeStartCol = verticalCols.findLast(col => col <= merge.c0) || 0;
+        const mergeStartCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
         const mergeEndCol = verticalCols.find(col => col > merge.c1) || cols;
         
         // Check if this normal segment overlaps with the merge shelf
@@ -217,56 +217,6 @@ function calculateVerticalSegments(
 /**
  * Calculate extended shelves that span across horizontal merges
  */
-function calculateExtendedShelves(
-  rows: number,
-  cols: number,
-  merges: MergeSpec[],
-  presentVerticals: Set<number>,
-  frameThickness: number,
-  interiorClearanceInches: number
-): ExtendedShelf[] {
-  const extendedShelves: ExtendedShelf[] = [];
-  
-  // For each row boundary (potential shelf location)
-  for (let r = 1; r < rows; r++) {
-    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
-    
-    // Check for horizontal merges that affect this shelf row
-    const affectingMerges = merges.filter(merge => 
-      (merge.r0 < r && merge.r1 >= r) || (merge.r0 <= r && merge.r1 > r)
-    );
-    
-    if (affectingMerges.length > 0) {
-      // Create extended shelves that span across merges
-      for (let i = 0; i < verticalCols.length - 1; i++) {
-        const colStart = verticalCols[i];
-        const colEnd = verticalCols[i + 1];
-        
-        // Check if this span crosses any horizontal merges
-        const spanningMerge = affectingMerges.find(merge =>
-          colStart >= merge.c0 && colEnd <= merge.c1 + 1
-        );
-        
-        if (spanningMerge) {
-          const shelfLength = calculateBayWidth(
-            colEnd - colStart,
-            interiorClearanceInches,
-            frameThickness
-          );
-          
-          extendedShelves.push({
-            row: r,
-            colStart,
-            colEnd,
-            lengthIn: shelfLength
-          });
-        }
-      }
-    }
-  }
-  
-  return extendedShelves;
-}
 
 /**
  * Calculate the layout info (which verticals and horizontals are present)

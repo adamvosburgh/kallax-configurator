@@ -122,15 +122,14 @@ export function calculateBackPosition(extDepth: number): [number, number, number
  */
 export function calculateBayShelfPosition(
   bay: { row: number; colStart: number; colEnd: number },
-  rows: number,
-  cols: number,
+  _rows: number,
+  _cols: number,
   interiorClearanceInches: number,
   frameThickness: number,
   extWidth: number,
   extHeight: number
 ): [number, number, number] {
   // Calculate X position based on bay center
-  const bayCenter = (bay.colStart + bay.colEnd) / 2;
   const bayWidthInches = calculateBayWidth(bay.colEnd - bay.colStart, interiorClearanceInches, frameThickness);
   
   // Position from left edge of shelf unit
@@ -149,7 +148,7 @@ export function calculateBayShelfPosition(
  */
 export function calculateVerticalDividerPosition(
   columnIndex: number,
-  cols: number,
+  _cols: number,
   interiorClearanceInches: number,
   frameThickness: number,
   extWidth: number
@@ -168,9 +167,9 @@ export function calculateVerticalDividerSegmentPosition(
   columnIndex: number,
   rowStart: number,
   rowEnd: number,
-  segmentHeight: number,
-  cols: number,
-  rows: number,
+  _segmentHeight: number,
+  _cols: number,
+  _rows: number,
   interiorClearanceInches: number,
   frameThickness: number,
   extWidth: number,
@@ -193,8 +192,8 @@ export function calculateVerticalDividerSegmentPosition(
  */
 export function calculateDoorPosition(
   bay: { row: number; colStart: number; colEnd: number; rowEnd?: number },
-  rows: number,
-  cols: number,
+  _rows: number,
+  _cols: number,
   interiorClearanceInches: number,
   frameThickness: number,
   extWidth: number,
@@ -204,7 +203,6 @@ export function calculateDoorPosition(
   depthInches?: number
 ): [number, number, number] {
   // Calculate X position based on bay center (same as shelf)
-  const bayCenter = (bay.colStart + bay.colEnd) / 2;
   const bayWidthInches = calculateBayWidth(bay.colEnd - bay.colStart, interiorClearanceInches, frameThickness);
   
   // Position from left edge of shelf unit
