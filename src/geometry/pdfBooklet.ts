@@ -463,7 +463,7 @@ Choose your method based on your tools, skill level, and desired appearance.`;
   const oversizedSvgs = generateOversizedPartSvgs(layoutResult.oversizedParts);
   
   // Calculate total pages needed (regular sheets + oversized parts sections)
-  const sheetsPerPage = 4;
+  const sheetsPerPage = 3;
   const regularSheetPages = Math.ceil(sheetSvgs.length / sheetsPerPage);
   
   // Process regular sheet pages first
@@ -481,7 +481,7 @@ Choose your method based on your tools, skill level, and desired appearance.`;
     yPos -= 25;
     
     // Body text with warning combined
-    const bodyText = 'Suggestion for organizing cuts on 4\' x 8\' plywood sheet goods.\n\nThese drawings are suggestions for how one may lay out the parts on 4\' x 8\' sheet to minimize material waste. The packing algorithm used here is very basic, and should be double-checked. To try to plan for max rip lengths of various equipment - pieces with both dims below 24" are organized by their largest dim, and pieces with a dim above 24" are organized by their smallest. Lastly, the packing algorithm puts 1" in between cuts - this is so the user does not end up with small pieces due to the kerf of the blade, not to actually suggest you should put 1" in between cuts.';
+    const bodyText = 'Suggestion for organizing cuts on 4\' x 8\' plywood sheet goods. The packing algorithm used here is very basic, and should be double-checked. I used 24" as a max rip width where possible. Lastly, the packing algorithm puts 1" in between cuts - this is to avoid overpacking sheets, not to actually suggest you should put 1" in between cuts.';
     yPos -= 25;
     
     // Wrap body text (handles line breaks)
@@ -528,7 +528,7 @@ Choose your method based on your tools, skill level, and desired appearance.`;
     yPos -= 20;
     
     // Note about dimensions
-    page4.drawText('**Note - these dimensions may change depending on your preferred assembly method!! See next section**', {
+    page4.drawText('**Note - these dimensions may change depending on your preferred assembly method!! See previous section**', {
       x: margin,
       y: yPos,
       size: 10,
@@ -543,12 +543,12 @@ Choose your method based on your tools, skill level, and desired appearance.`;
     const startIndex = pageIndex * sheetsPerPage;
     const endIndex = Math.min(startIndex + sheetsPerPage, sheetSvgs.length);
     
-    let currentX = margin;
+    let currentX = margin + 40; // Start with some left padding to center sheets
     
     for (let i = startIndex; i < endIndex; i++) {
       try {
         const pngBytes = await svgToPng(sheetSvgs[i], {
-          width: 250, // Tight around 4:8 ratio content + minimal margins
+          width: 270, // Tight around 4:8 ratio content + minimal margins
           height: 500, // Includes title space and dimension space
           scale: 2
         });
@@ -771,7 +771,7 @@ Choose your method based on your tools, skill level, and desired appearance.`;
   yPos = pageHeight - margin;
   
   // Header
-  page5.drawText('Thank you!', {
+  page5.drawText('Notes', {
     x: margin,
     y: yPos,
     size: 20,
@@ -780,7 +780,7 @@ Choose your method based on your tools, skill level, and desired appearance.`;
   yPos -= 60;
   
   // Body
-  page5.drawText('Hope this helps. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com!', {
+  page5.drawText('Hope this helps. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\n If you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
     x: margin,
     y: yPos,
     size: 12,
