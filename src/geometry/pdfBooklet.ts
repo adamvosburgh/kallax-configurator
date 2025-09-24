@@ -4,7 +4,7 @@ import { toFraction32, formatDimensions } from './format';
 import { svgToPng } from '../lib/svgToImage';
 import { generateSheetLayouts } from './ripGenerator';
 import { generateAllSheetSvgs, generateOversizedPartSvgs } from './cutListSvg';
-import { generateAxonometricSvg } from './axonometricSvg';
+import { captureAxonometricView } from './sceneCapture';
 
 export async function generatePDFBooklet(
   parts: Part[], 
@@ -98,15 +98,15 @@ export async function generatePDFBooklet(
   const imageX = (pageWidth - imageWidth) / 2; // Centered
   const imageY = yPos - imageHeight;
   
-  // Generate and embed axonometric view
+  // Generate and embed axonometric view from 3D scene capture
   try {
-    const axonometricSvg = generateAxonometricSvg(params);
-    const axonometricPngBytes = await svgToPng(axonometricSvg, {
-      width: Math.round(imageWidth),
-      height: Math.round(imageHeight),
-      scale: 2
-    });
+    const axonometricBlob = await captureAxonometricView(
+      params,
+      Math.round(imageWidth * 2), // Higher resolution for better quality
+      Math.round(imageHeight * 2)
+    );
     
+    const axonometricPngBytes = new Uint8Array(await axonometricBlob.arrayBuffer());
     const axonometricImage = await pdfDoc.embedPng(axonometricPngBytes);
     const scaledDims = axonometricImage.scale(Math.min(imageWidth / axonometricImage.width, imageHeight / axonometricImage.height));
     
@@ -116,7 +116,7 @@ export async function generatePDFBooklet(
     
     page1.drawImage(axonometricImage, {
       x: centeredX,
-      y: centeredY,
+      y: centeredY - 50,
       width: scaledDims.width,
       height: scaledDims.height,
     });
