@@ -420,17 +420,22 @@ export async function generatePDFBooklet(
   // Assembly methods content
   const assemblyText = `For 3/4" plywood modular shelving, consider these assembly methods:
 
-DADOS:
-• Use 1/8" dados for shelves into vertical dividers (leaves ~1/2" material)
-• Use 1/4" dados for top/bottom/sides into end pieces (leaves 1/2" material)
-• Remember to adjust part dimensions to account for how parts sit into dados
-
+\n\n
 BUTT JOINTS:
+\n
 • Hidden screws: Pre-drill and countersink, use wood plugs to hide screw heads
 • Pocket screws: Use pocket hole jig for strong invisible joints
 • Glued dowels: Use doweling jig for precise alignment, very strong when done properly
 
-Choose your method based on your tools, skill level, and desired appearance.`;
+For butt joints, you can use the measurements provided by the application as is.
+\n\n
+DADOS:
+\n
+• Use 1/8" dados for shelves into vertical dividers (leaves ~1/2" material)
+• Use 1/4" dados for top/bottom/sides into end pieces (leaves 1/2" material)
+
+For dados, you will have to adjust the part dimensions according to the dado depth above. (e.g. shelves that go into vertical dividers on 
+either side will add 1/8" to either side)`
   
   // Split text into lines and render
   const assemblyLines = assemblyText.split('\n');
