@@ -1,5 +1,6 @@
 import type { DesignParams, Part } from './types';
-import { calculateLayout, calculateDimensions } from './layout';
+import { calculateLayout } from './layout';
+import { calculateAllDimensions } from './measurements';
 import { calculateBayWidth as calculateBayWidthFromMeasurements, calculateSideHeight } from './measurements';
 
 /**
@@ -12,23 +13,6 @@ function generatePartId(role: string, index?: number, suffix?: string): string {
   return parts.join('-');
 }
 
-/**
- * Calculate bay width for a span of modules
- * @deprecated - Use calculateBayWidthFromMeasurements
- */
-function calculateBayWidth(
-  colStart: number, 
-  colEnd: number, 
-  interiorClearance: number, 
-  frameThickness: number
-): number {
-  const moduleCount = colEnd - colStart;
-  return calculateBayWidthFromMeasurements(moduleCount, interiorClearance, frameThickness);
-}
-
-/**
- * Check if two cells are merged together
- */
 
 /**
  * Get all unique openings (merged cells are treated as single openings)
@@ -88,7 +72,7 @@ function getOpenings(params: DesignParams): Array<{ row: number; col: number; wi
 export function generateParts(params: DesignParams): Part[] {
   const parts: Part[] = [];
   const layout = calculateLayout(params);
-  const dimensions = calculateDimensions(params);
+  const dimensions = calculateAllDimensions(params);
   
   const {
     cols: _cols,
@@ -168,9 +152,9 @@ export function generateParts(params: DesignParams): Part[] {
 
   // Bay shelves (interior horizontals)
   for (const segment of layout.horizontalSegments) {
-    const bayWidth = calculateBayWidth(
-      segment.colStart,
-      segment.colEnd,
+    const moduleCount = segment.colEnd - segment.colStart;
+    const bayWidth = calculateBayWidthFromMeasurements(
+      moduleCount,
       interiorClearanceInches,
       frameThickness
     );
@@ -190,9 +174,6 @@ export function generateParts(params: DesignParams): Part[] {
       },
     });
   }
-
-  // Extended shelves are no longer needed - regular bay shelves now automatically 
-  // span horizontal merges since interior verticals were removed
 
   // Back panel
   if (hasBack && materials.back) {

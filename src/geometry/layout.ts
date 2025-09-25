@@ -1,10 +1,5 @@
-import type { DesignParams, MergeSpec, LayoutInfo, DerivedDimensions, VerticalSegment, ExtendedShelf } from './types';
-import { calculateAllDimensions, calculateSideHeight } from './measurements';
-
-// Re-export for convenience
-export type { DerivedDimensions } from './types';
-
-// Helper function removed - was not being used
+import type { DesignParams, MergeSpec, LayoutInfo, VerticalSegment, ExtendedShelf } from './types';
+import { calculateSideHeight } from './measurements';
 
 /**
  * Check if two adjacent cells are merged together
@@ -215,10 +210,6 @@ function calculateVerticalSegments(
 }
 
 /**
- * Calculate extended shelves that span across horizontal merges
- */
-
-/**
  * Calculate the layout info (which verticals and horizontals are present)
  */
 export function calculateLayout(params: DesignParams): LayoutInfo {
@@ -240,8 +231,6 @@ export function calculateLayout(params: DesignParams): LayoutInfo {
     params.interiorClearanceInches
   );
   
-  // Extended shelves are no longer needed - regular segments now span horizontal merges
-  // since interior verticals were removed by calculatePresentVerticals
   const extendedShelves: ExtendedShelf[] = [];
   
   return {
@@ -252,10 +241,3 @@ export function calculateLayout(params: DesignParams): LayoutInfo {
   };
 }
 
-/**
- * Calculate exterior dimensions
- * @deprecated - Use the centralized calculateAllDimensions from measurements.ts
- */
-export function calculateDimensions(params: DesignParams): DerivedDimensions {
-  return calculateAllDimensions(params);
-}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateLayout, calculateDimensions } from './layout';
+import { calculateLayout } from './layout';
+import { calculateAllDimensions } from './measurements';
 import { DEFAULT_DESIGN } from './constants';
 import type { DesignParams } from './types';
 
@@ -52,7 +53,7 @@ describe('Layout Calculation', () => {
   
   it('should calculate correct exterior dimensions', () => {
     const params = DEFAULT_DESIGN; // 2x2, no back
-    const dims = calculateDimensions(params);
+    const dims = calculateAllDimensions(params);
     
     const L = 13.25;
     const t = 23/32; // 3/4" actual thickness
@@ -72,7 +73,7 @@ describe('Layout Calculation', () => {
       hasBack: true,
     };
     
-    const dims = calculateDimensions(params);
+    const dims = calculateAllDimensions(params);
     const backThickness = params.materials.back?.actualInches || 0;
     
     expect(dims.extDepth).toBeCloseTo(15.375 + backThickness, 4);

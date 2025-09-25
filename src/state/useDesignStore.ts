@@ -1,11 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DesignParams, MergeSpec, ThicknessMap } from '../geometry/types';
+import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions } from '../geometry/types';
 import { DEFAULT_DESIGN, RECOMMENDED_MATERIALS } from '../geometry/constants';
 import type { DesignAnalysis } from '../geometry/estimate';
 import { analyzeDesign } from '../geometry/estimate';
-import type { DerivedDimensions } from '../geometry/layout';
-import { calculateDimensions } from '../geometry/layout';
+import { calculateAllDimensions } from '../geometry/measurements';
 
 interface DesignStore {
   // Core design parameters
@@ -57,7 +56,7 @@ interface DesignStore {
 // Helper to recompute derived data
 function computeDerivedData(params: DesignParams) {
   const analysis = analyzeDesign(params);
-  const dimensions = calculateDimensions(params);
+  const dimensions = calculateAllDimensions(params);
   return { analysis, dimensions };
 }
 

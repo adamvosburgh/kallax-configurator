@@ -25,8 +25,8 @@ export async function generatePDFBooklet(
   // Helper function to add a page
   const addPage = () => pdfDoc.addPage([pageWidth, pageHeight]);
   
-  // Helper function to get site URL (placeholder for now)
-  const siteUrl = 'kallax-configurator.app'; // TODO: Get from config
+  // Site URL for instructions
+  const siteUrl = 'kallax-configurator.app';
   
   // Helper function to get door configuration description
   const getDoorDescription = () => {
