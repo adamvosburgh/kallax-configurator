@@ -135,14 +135,15 @@ export function generateSheetSvg(sheet: SheetLayout): string {
   for (const rip of sheet.ripCuts) {
     const x = inchesToSvgX(rip.position);
     const y1 = sheetY;
-    const y2 = sheetY + SHEET_DISPLAY_HEIGHT;
+    const y2 = sheetY + SHEET_DISPLAY_HEIGHT + 30; // Extend slightly below sheet for dimension text
     
     // Rip line
     elements.push(`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" class="rip-line" />`);
     
     // Dimension text at bottom
     const dimY = sheetY + SHEET_DISPLAY_HEIGHT + 20;
-    elements.push(`<text x="${x}" y="${dimY}" class="dimension-text">${rip.label}</text>`);
+    const dimX = x +20;
+    elements.push(`<text x="${dimX}" y="${dimY}" class="dimension-text">${rip.label}</text>`);
   }
   
   // Add final rip line at the right edge if there are rips

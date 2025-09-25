@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Canvas3D } from '../components/Canvas3D';
 import { GridEditor } from '../components/GridEditor';
 import { ControlsPanel } from '../components/ControlsPanel';
 import { ExportPanel } from '../components/ExportPanel';
-import { PDFPreview } from '../components/PDFPreview';
 import { useDesignStore } from '../state/useDesignStore';
 
 export function App() {
   const store = useDesignStore();
   const { importDesign, _hasHydrated } = store;
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   // Handle first-time users and ensure hydration is complete
   useEffect(() => {
@@ -41,25 +39,7 @@ export function App() {
     }
   }, [importDesign]);
 
-  // Handle navigation
-  useEffect(() => {
-    const handlePopstate = () => {
-      setCurrentPath(window.location.pathname);
-    };
 
-    window.addEventListener('popstate', handlePopstate);
-    return () => window.removeEventListener('popstate', handlePopstate);
-  }, []);
-
-  const navigate = (path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
-  };
-
-  // Show PDF preview for /pdf-preview route
-  if (currentPath === '/pdf-preview') {
-    return <PDFPreview />;
-  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -73,12 +53,6 @@ export function App() {
               <p className="text-sm text-gray-600">Design modular shelving with IKEA-style instructions</p>
             </div>
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/pdf-preview')}
-                className="px-3 py-1 text-xs bg-orange-100 text-orange-700 rounded border border-orange-200 hover:bg-orange-200 transition-colors"
-              >
-                PDF Preview (Dev)
-              </button>
               <div className="text-xs text-gray-500">
                 Open source • MIT License
               </div>

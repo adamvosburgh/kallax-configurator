@@ -548,12 +548,12 @@ either side will add 1/8" to either side)`
     const startIndex = pageIndex * sheetsPerPage;
     const endIndex = Math.min(startIndex + sheetsPerPage, sheetSvgs.length);
     
-    let currentX = margin + 40; // Start with some left padding to center sheets
+    let currentX = margin + 30; // Start with some left padding to center sheets
     
     for (let i = startIndex; i < endIndex; i++) {
       try {
         const pngBytes = await svgToPng(sheetSvgs[i], {
-          width: 270, // Tight around 4:8 ratio content + minimal margins
+          width: 280, // Tight around 4:8 ratio content + minimal margins
           height: 500, // Includes title space and dimension space
           scale: 2
         });
