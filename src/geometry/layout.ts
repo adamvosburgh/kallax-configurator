@@ -76,28 +76,61 @@ function calculateHorizontalSegments(
     // Track which areas are covered by extended shelves to avoid duplicates
     const coveredRanges: Array<{ start: number; end: number }> = [];
 
-    // First, handle areas with horizontal merges - these may need extended shelves
-    for (const merge of horizontalMergesAtRow) {
-      // Check if there's a vertical merge that would eliminate the need for a shelf
-      let hasVerticalMerge = false;
-      for (let c = merge.c0; c <= merge.c1; c++) {
-        if (areCellsMerged(r - 1, c, r, c, merges)) {
-          hasVerticalMerge = true;
-          break;
+    if (horizontalMergesAtRow.length > 0) {
+      // Find the union of all horizontal merges at this row
+      let minMergeCol = Math.min(...horizontalMergesAtRow.map(m => m.c0));
+      let maxMergeCol = Math.max(...horizontalMergesAtRow.map(m => m.c1));
+
+      // Check which vertical dividers in the merged area are actually continuous
+      const brokenVerticals = new Set<number>();
+
+      for (let col = minMergeCol + 1; col <= maxMergeCol; col++) {
+        if (presentVerticals.has(col)) {
+          // Check if this vertical is broken by any horizontal merge
+          const brokenInRowAbove = horizontalMergesAtRow.some(merge =>
+            merge.r0 <= r - 1 && merge.r1 >= r - 1 && col > merge.c0 && col <= merge.c1
+          );
+          const brokenInRowBelow = horizontalMergesAtRow.some(merge =>
+            merge.r0 <= r && merge.r1 >= r && col > merge.c0 && col <= merge.c1
+          );
+
+          if (brokenInRowAbove || brokenInRowBelow) {
+            brokenVerticals.add(col);
+          }
         }
       }
 
-      if (!hasVerticalMerge) {
-        // Find the span of this shelf - it should extend to the nearest verticals
-        const startCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
-        const endCol = verticalCols.find(col => col > merge.c1) || cols;
+      // Group merges by their continuous spans (separated by unbroken verticals)
+      const continuousSpans: Array<{ start: number; end: number }> = [];
+      let spanStart = minMergeCol;
 
-        // Check if this range is already covered
-        const alreadyCovered = coveredRanges.some(range =>
-          range.start === startCol && range.end === endCol
-        );
+      for (let col = minMergeCol + 1; col <= maxMergeCol + 1; col++) {
+        const isUnbrokenVertical = presentVerticals.has(col) && !brokenVerticals.has(col);
+        const isEndOfMergeArea = col > maxMergeCol;
 
-        if (!alreadyCovered) {
+        if (isUnbrokenVertical || isEndOfMergeArea) {
+          // End current span
+          continuousSpans.push({ start: spanStart, end: col });
+          spanStart = col;
+        }
+      }
+
+      // Create shelf segments for each continuous span
+      for (const span of continuousSpans) {
+        // Check if there's a vertical merge that would eliminate the need for a shelf
+        let hasVerticalMerge = false;
+        for (let c = span.start; c < span.end; c++) {
+          if (areCellsMerged(r - 1, c, r, c, merges)) {
+            hasVerticalMerge = true;
+            break;
+          }
+        }
+
+        if (!hasVerticalMerge) {
+          // Find the actual vertical boundaries for this span
+          const startCol = verticalCols.filter(col => col <= span.start).pop() || 0;
+          const endCol = verticalCols.find(col => col >= span.end) || cols;
+
           segments.push({
             row: r,
             colStart: startCol,
