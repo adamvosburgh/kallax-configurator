@@ -3,11 +3,14 @@ import { Canvas3D } from '../components/Canvas3D';
 import { GridEditor } from '../components/GridEditor';
 import { ControlsPanel } from '../components/ControlsPanel';
 import { ExportPanel } from '../components/ExportPanel';
+import { FloatingWindow } from '../components/FloatingWindow';
 import { useDesignStore } from '../state/useDesignStore';
+import { useFloatingWindowStore } from '../state/useFloatingWindowStore';
 
 export function App() {
   const store = useDesignStore();
-  const { importDesign, _hasHydrated } = store;
+  const { importDesign, _hasHydrated, params } = store;
+  const { showWindow } = useFloatingWindowStore();
 
   // Handle first-time users and ensure hydration is complete
   useEffect(() => {
@@ -42,70 +45,97 @@ export function App() {
 
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Kallax Configurator</h1>
-              <p className="text-sm text-gray-600">Design modular shelving with IKEA-style instructions</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-xs text-gray-500">
-                Open source • MIT License
-              </div>
-            </div>
+    <div className="h-screen bg-white overflow-hidden flex flex-col">
+      {/* Header - dimensions.com inspired */}
+      <header className="border-b border-black px-6 py-4 bg-white flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-mono font-bold text-black">Kallax Configurator</h1>
+            <p className="text-sm font-mono text-gray-600">Design modular shelving with IKEA-style instructions</p>
           </div>
-        </header>
-        
-        {/* Main workspace */}
-        <div className="flex flex-1 min-h-0">
-          {/* Left Panel - Grid Editor */}
-          <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="font-semibold text-lg mb-1">Grid Layout</h2>
-              <p className="text-sm text-gray-600">Design your shelf configuration</p>
-            </div>
-            <div className="flex-1 p-4 overflow-y-auto">
-              <GridEditor />
-            </div>
-            {/* Export Panel at bottom of left panel */}
-            <ExportPanel />
-          </div>
-          
-          {/* Center - 3D Preview */}
-          <div className="flex-1 min-w-0 relative">
-            {_hasHydrated ? (
-              <Canvas3D />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-gray-50">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <div className="text-sm text-gray-500">Loading configuration...</div>
-                </div>
-              </div>
-            )}
-            
-            {/* Floating overlay with basic info */}
-            <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 text-xs shadow-lg">
-              <div className="font-medium mb-2">Current Design</div>
-              <div className="space-y-1 text-gray-600">
-                <div>Configuration: {useDesignStore.getState().params.rows}×{useDesignStore.getState().params.cols}</div>
-                <div>Merges: {useDesignStore.getState().params.merges.length}</div>
-                <div>Back: {useDesignStore.getState().params.hasBack ? 'Yes' : 'No'}</div>
-                <div>Doors: {useDesignStore.getState().params.hasDoors ? 'Yes' : 'No'}</div>
-              </div>
+          <div className="flex items-center">
+            <div className="text-xs font-mono text-gray-500">
+              Open source • MIT License
             </div>
           </div>
         </div>
+      </header>
+      
+      {/* Main 3D View - Full screen background */}
+      <div className="flex-1 relative bg-white min-h-0">
+        {_hasHydrated ? (
+          <Canvas3D />
+        ) : (
+          <div className="flex items-center justify-center h-full bg-white">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-4"></div>
+              <div className="text-sm font-mono text-gray-500">Loading configuration...</div>
+            </div>
+          </div>
+        )}
       </div>
       
-      {/* Right Panel - Controls */}
-      <div className="w-80 bg-white">
+      {/* Floating Windows */}
+      <FloatingWindow
+        id="grid-layout"
+        title="Grid Layout"
+        defaultPosition={{ x: 50, y: 120 }}
+        defaultSize={{ width: 500, height: 800 }}
+        collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
+      >
+        <GridEditor />
+      </FloatingWindow>
+      
+      <FloatingWindow
+        id="controls"
+        title="Controls"
+        defaultPosition={{ x: 570, y: 120 }}
+        defaultSize={{ width: 480, height: 850 }}
+        collapsedPreview={params.hasBack ? 'with back' : 'no back'}
+      >
         <ControlsPanel />
-      </div>
+      </FloatingWindow>
+      
+      <FloatingWindow
+        id="export"
+        title="Export"
+        defaultPosition={{ x: 50, y: 500 }}
+        defaultSize={{ width: 420, height: 350 }}
+        collapsedPreview="PDF Export"
+      >
+        <ExportPanel />
+      </FloatingWindow>
+
+      <FloatingWindow
+        id="key"
+        title="Parts Key"
+        defaultPosition={{ x: 1070, y: 120 }}
+        defaultSize={{ width: 280, height: 450 }}
+        collapsedPreview="3D Parts Legend"
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="color-swatch swatch-top-bottom"></div>
+            <span className="font-mono">Top/Bottom</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="color-swatch swatch-sides"></div>
+            <span className="font-mono">Sides</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="color-swatch swatch-sides"></div>
+            <span className="font-mono">Vertical Dividers</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="color-swatch swatch-doors"></div>
+            <span className="font-mono">Doors</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="color-swatch swatch-back"></div>
+            <span className="font-mono">Back Panels</span>
+          </div>
+        </div>
+      </FloatingWindow>
     </div>
   );
 }

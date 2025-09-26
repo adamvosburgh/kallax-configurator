@@ -138,56 +138,78 @@ export function GridEditor() {
       
       {/* Grid */}
       <div 
-        className="inline-block border-2 border-gray-400 bg-white select-none"
+        className="inline-block border-2 border-gray-400 bg-white select-none relative"
+        style={{ 
+          width: params.cols * 40, 
+          height: params.rows * 40 
+        }}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {Array.from({ length: params.rows }, (_, row) => (
-          <div key={row} className="flex">
-            {Array.from({ length: params.cols }, (_, col) => {
-              const merge = getCellMerge(row, col);
-              const isOrigin = merge && isMergeOrigin(row, col, merge);
-              const isInMerge = merge && !isOrigin;
-              const isInDrag = isInDragSelection(row, col);
-              
-              // Don't render cells that are covered by a merge
-              if (isInMerge) return null;
-              
-              const cellWidth = merge ? (merge.c1 - merge.c0 + 1) * 40 : 40;
-              const cellHeight = merge ? (merge.r1 - merge.r0 + 1) * 40 : 40;
-              
-              return (
-                <div
-                  key={`${row}-${col}`}
-                  className={`
-                    border border-gray-300 cursor-pointer transition-colors flex items-center justify-center text-xs font-mono
-                    ${isInDrag ? 'bg-blue-200' : ''}
-                    ${merge ? 'bg-green-100 border-green-400' : 'bg-gray-50 hover:bg-gray-100'}
-                  `}
-                  style={{ 
-                    width: cellWidth, 
-                    height: cellHeight,
-                    minWidth: cellWidth,
-                    minHeight: cellHeight,
-                  }}
-                  onMouseDown={() => !merge && handleMouseDown(row, col)}
-                  onMouseEnter={() => handleMouseEnter(row, col)}
-                  onClick={(e) => handleCellClick(row, col, e)}
-                >
-                  {merge ? (
-                    <span className="text-green-700">
-                      {merge.c1 - merge.c0 + 1}×{merge.r1 - merge.r0 + 1}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">
-                      {row},{col}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+        {/* Render all individual cells first */}
+        {Array.from({ length: params.rows }, (_, row) =>
+          Array.from({ length: params.cols }, (_, col) => {
+            const merge = getCellMerge(row, col);
+            const isInDrag = isInDragSelection(row, col);
+            
+            // Skip cells that are part of a merge
+            if (merge) return null;
+            
+            return (
+              <div
+                key={`cell-${row}-${col}`}
+                className={`
+                  absolute grid-cell
+                  ${isInDrag ? 'grid-cell-drag' : ''}
+                `}
+                style={{
+                  left: col * 40,
+                  top: row * 40,
+                  width: 40,
+                  height: 40,
+                }}
+                onMouseDown={() => handleMouseDown(row, col)}
+                onMouseEnter={() => handleMouseEnter(row, col)}
+                onClick={(e) => handleCellClick(row, col, e)}
+              >
+                <span className="text-gray-400">
+                  {row},{col}
+                </span>
+              </div>
+            );
+          })
+        )}
+        
+        {/* Render merged cells on top */}
+        {params.merges.map((merge, mergeIndex) => {
+          const isInDrag = Array.from({ length: merge.r1 - merge.r0 + 1 }, (_, dr) =>
+            Array.from({ length: merge.c1 - merge.c0 + 1 }, (_, dc) => 
+              isInDragSelection(merge.r0 + dr, merge.c0 + dc)
+            )
+          ).some(row => row.some(cell => cell));
+          
+          return (
+            <div
+              key={`merge-${mergeIndex}`}
+              className={`
+                absolute grid-cell grid-cell-merged
+                ${isInDrag ? 'grid-cell-drag' : ''}
+              `}
+              style={{
+                left: merge.c0 * 40,
+                top: merge.r0 * 40,
+                width: (merge.c1 - merge.c0 + 1) * 40,
+                height: (merge.r1 - merge.r0 + 1) * 40,
+                zIndex: 1,
+              }}
+              onClick={(e) => handleCellClick(merge.r0, merge.c0, e)}
+            >
+              <span className="text-green-700">
+                {merge.c1 - merge.c0 + 1}×{merge.r1 - merge.r0 + 1}
+              </span>
+            </div>
+          );
+        })}
       </div>
       
       {/* Warnings */}

@@ -5,11 +5,13 @@ An open-source web application for designing IKEA Kallax-style modular shelving 
 ## Features
 
 - **Visual Grid Editor**: Design shelving layouts up to 10×10 with drag-to-merge functionality
-- **Real-time 3D Preview**: See your design in 3D with hover tooltips for part details  
+- **Real-time 3D Preview**: See your design in 3D with hover tooltips for part details
+- **Floating Window Interface**: Modular UI with draggable/resizable panels inspired by Hylics aesthetic
 - **Material Configuration**: Choose plywood thicknesses with actual vs nominal options
 - **Export Options**: Generate cut lists (CSV), design files (JSON), and assembly instructions (PDF)
 - **URL Sharing**: Share designs via compressed URLs
 - **Responsive Design**: Works on desktop and tablet devices
+- **Optional 3D Merge Tools**: Hover-based merge targets in 3D view (disabled by default)
 
 ## Quick Start
 
@@ -62,8 +64,11 @@ src/
 ├── components/         # React components
 │   ├── Canvas3D.tsx   # 3D preview with Three.js
 │   ├── GridEditor.tsx # Grid design interface
-│   ├── ControlsPanel.tsx # Material and option controls  
-│   └── ExportPanel.tsx # Export functionality
+│   ├── ControlsPanel.tsx # Material and option controls
+│   ├── ExportPanel.tsx # Export functionality
+│   ├── FloatingWindow.tsx # Draggable/resizable window system
+│   ├── PartHoverCard.tsx # 3D part detail tooltip
+│   └── MergeTargetOverlay.tsx # Optional 3D merge functionality
 ├── geometry/          # Core calculation logic
 │   ├── constants.ts   # Default values and materials
 │   ├── types.ts       # TypeScript interfaces
@@ -74,9 +79,10 @@ src/
 │   ├── svgDiagrams.ts # Assembly step diagrams
 │   └── pdfBooklet.ts  # PDF instruction generation
 ├── state/             # State management
-│   └── useDesignStore.ts # Zustand store
+│   ├── useDesignStore.ts # Main design state (Zustand)
+│   └── useFloatingWindowStore.ts # UI window management
 └── pages/
-    └── App.tsx        # Main application layout
+    └── App.tsx        # Main application layout with floating windows
 ```
 
 ## Tech Stack
@@ -91,11 +97,19 @@ src/
 
 ## Usage
 
+### Interface
+The application uses a floating window interface with draggable, resizable panels:
+- **Grid Layout**: Design your shelving grid with drag-to-merge functionality
+- **Controls**: Material settings, back panels, doors, and dimensions
+- **Export**: Generate cut lists, design files, and assembly instructions
+- **Parts Key**: 3D color legend for part identification
+
 ### Basic Design
 1. Set grid size (rows × columns)
-2. Drag to merge cells for larger openings  
+2. Drag to merge cells for larger openings in the 2D grid editor
 3. Enable back panel and/or doors as needed
 4. Adjust material thicknesses if required
+5. View real-time 3D preview with hover details
 
 ### Material Overrides
 The app uses standard plywood thicknesses by default:
@@ -110,6 +124,16 @@ Override these values in the controls panel for your specific material.
 - **Design (JSON)**: Complete design data for backup/sharing
 - **Instructions (PDF)**: IKEA-style assembly booklet
 - **Share Link**: URL with compressed design data
+
+### 3D Merge Functionality (Experimental)
+An optional 3D merge system allows creating cell merges directly in the 3D view:
+- **Disabled by default** due to performance considerations
+- **Toggle via code**: Set `ENABLE_3D_MERGE_TARGETS = true` in `Canvas3D.tsx`
+- **Hover-based targets**: Plus icons appear between adjacent cells
+- **Animation system**: Icons scale and change opacity on hover
+- **Click to merge**: Works with existing merge logic from 2D grid
+
+*Note: Use the 2D grid editor for primary merge functionality - it's more reliable and performant.*
 
 ## Development
 
@@ -137,6 +161,7 @@ Tests cover layout calculation, parts generation, and dimension formatting.
 - **No structural analysis** - relies on user judgment for large spans
 - **Simplified 3D positioning** - parts shown relative to overall dimensions
 - **PDF diagrams are basic** - more detailed exploded views planned for v2
+- **3D merge functionality is experimental** - disabled by default due to performance considerations
 
 ## Future Enhancements
 

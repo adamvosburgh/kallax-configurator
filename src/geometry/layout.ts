@@ -51,94 +51,77 @@ function calculatePresentVerticals(rows: number, cols: number, merges: MergeSpec
 }
 
 /**
- * Calculate horizontal shelf segments, considering both vertical merges (delete shelves) 
+ * Calculate horizontal shelf segments, considering both vertical merges (delete shelves)
  * and horizontal merges (extend shelves across merged areas)
  */
 function calculateHorizontalSegments(
-  rows: number, 
+  rows: number,
   cols: number,
-  merges: MergeSpec[], 
+  merges: MergeSpec[],
   presentVerticals: Set<number>
 ): Array<{ row: number; colStart: number; colEnd: number }> {
   const segments: Array<{ row: number; colStart: number; colEnd: number }> = [];
-  
+
   // For each row boundary (between rows)
   for (let r = 1; r < rows; r++) {
-    // Find horizontal merges that affect this row boundary
-    // A horizontal merge affects a row boundary if it's either:
-    // 1. In the row above the boundary (merge.r0 <= r-1 && merge.r1 >= r-1)
-    // 2. In the row below the boundary (merge.r0 <= r && merge.r1 >= r)
-    const horizontalMergesAtRow = merges.filter(merge => 
-      merge.c1 > merge.c0 && // spans multiple columns (is horizontal)
-      ((merge.r0 <= r - 1 && merge.r1 >= r - 1) || // merge in row above boundary
-       (merge.r0 <= r && merge.r1 >= r)) // merge in row below boundary
-    );
-    
-    // For each horizontal merge at this row, create an extended shelf segment
-    for (const merge of horizontalMergesAtRow) {
-      // Check if there's a vertical merge that would eliminate this shelf
-      let hasVerticalMerge = false;
-      for (let c = merge.c0; c <= merge.c1; c++) {
-        if (areCellsMerged(r - 1, c, r, c, merges)) {
-          hasVerticalMerge = true;
-          break;
-        }
-      }
-      
-      if (!hasVerticalMerge) {
-        // Create a shelf segment that spans exactly the merged area
-        // Find the nearest present verticals that bracket this merge
-        const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
-        const startCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
-        const endCol = verticalCols.find(col => col > merge.c1) || cols;
-        
-        segments.push({
-          row: r,
-          colStart: startCol,
-          colEnd: endCol,
-        });
+    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
+
+    // Find all cells that need shelf support at this row boundary
+    // A cell needs shelf support if it's not vertically merged with the cell above/below
+    const needsShelfSupport: boolean[] = new Array(cols).fill(false);
+
+    for (let c = 0; c < cols; c++) {
+      if (!areCellsMerged(r - 1, c, r, c, merges)) {
+        needsShelfSupport[c] = true;
       }
     }
-    
-    // For areas without horizontal merges, create normal segments between verticals
-    const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
-    for (let i = 0; i < verticalCols.length - 1; i++) {
-      const colStart = verticalCols[i];
-      const colEnd = verticalCols[i + 1];
-      
-      // Check if this area overlaps with any horizontal merge shelf
-      // If there's any overlap, skip this normal segment to avoid duplicates
-      const overlapsWithMerge = horizontalMergesAtRow.some(merge => {
-        // Find the shelf boundaries for this merge
-        const mergeStartCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
-        const mergeEndCol = verticalCols.find(col => col > merge.c1) || cols;
-        
-        // Check if this normal segment overlaps with the merge shelf
-        return !(colEnd <= mergeStartCol || colStart >= mergeEndCol);
-      });
-      
-      if (!overlapsWithMerge) {
-        // Check if there's a vertical merge across this row boundary
-        let hasVerticalMerge = false;
-        for (let c = colStart; c < colEnd; c++) {
-          if (areCellsMerged(r - 1, c, r, c, merges)) {
-            hasVerticalMerge = true;
-            break;
-          }
+
+    // Group consecutive cells that need shelf support into shelf regions
+    const shelfRegions: Array<{ start: number; end: number }> = [];
+    let regionStart = -1;
+
+    for (let c = 0; c <= cols; c++) { // go to cols+1 to handle end case
+      if (c < cols && needsShelfSupport[c]) {
+        if (regionStart === -1) {
+          regionStart = c;
         }
-        
-        // Only add shelf segment if there's no vertical merge
-        if (!hasVerticalMerge) {
+      } else {
+        if (regionStart !== -1) {
+          shelfRegions.push({ start: regionStart, end: c });
+          regionStart = -1;
+        }
+      }
+    }
+
+    // For each shelf region, create segments between the appropriate verticals
+    for (const region of shelfRegions) {
+      // Find the vertical boundaries that encompass this shelf region
+      // We need to extend the shelf to the nearest verticals on either side
+
+      // Find the vertical at or before the start of the region
+      const startVertical = verticalCols.filter(col => col <= region.start).pop() || 0;
+
+      // Find the vertical at or after the end of the region
+      const endVertical = verticalCols.find(col => col >= region.end) || cols;
+
+      // Only create a segment if we have a valid span
+      if (startVertical < endVertical) {
+        // Check if this exact segment already exists (to avoid duplicates)
+        const exists = segments.some(seg =>
+          seg.row === r && seg.colStart === startVertical && seg.colEnd === endVertical
+        );
+
+        if (!exists) {
           segments.push({
             row: r,
-            colStart,
-            colEnd,
+            colStart: startVertical,
+            colEnd: endVertical,
           });
         }
       }
     }
   }
-  
+
   return segments;
 }
 

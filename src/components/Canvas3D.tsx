@@ -1,9 +1,10 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useRef, useCallback, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useDesignStore } from '../state/useDesignStore';
 import type { Part } from '../geometry/types';
 import { PartHoverCard } from './PartHoverCard';
+import { MergeTargetOverlay } from './MergeTargetOverlay';
 import {
   calculateBottomPosition,
   calculateTopPosition,
@@ -46,26 +47,26 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
     return [0, 0, 0];
   };
 
-  // Color based on part role
+  // Color based on part role - brown wood shades
   const getColor = () => {
-    if (isSelected) return '#3b82f6'; // blue
-    if (isHovered) return '#10b981'; // green
-    
+    if (isSelected) return '#3b82f6'; // blue for selection
+    if (isHovered) return '#10b981'; // green for hover
+
     switch (part.role) {
       case 'Top':
       case 'Bottom':
-        return '#8b5cf6'; // purple
+        return '#a0522d'; // sienna
       case 'Side':
       case 'VerticalDivider':
-        return '#f59e0b'; // amber
+        return '#8b4513'; // saddle brown
       case 'BayShelf':
-        return '#ef4444'; // red
+        return '#d2691e'; // chocolate
       case 'Back':
-        return '#6b7280'; // gray
+        return '#654321'; // dark brown
       case 'Door':
-        return '#06b6d4'; // cyan
+        return '#cd853f'; // peru
       default:
-        return '#9ca3af'; // gray
+        return '#deb887'; // burlywood
     }
   };
   
@@ -85,7 +86,7 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
       }}
     >
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial 
+      <meshStandardMaterial
         color={getColor()}
         transparent
         opacity={part.role === 'Door' ? 0.7 : 0.9}
@@ -94,30 +95,24 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
   );
 }
 
+// Enable/disable 3D merge functionality
+const ENABLE_3D_MERGE_TARGETS = false;
+
 function Scene() {
   const { analysis, dimensions, params } = useDesignStore();
   const [hoveredPart, setHoveredPart] = useState<Part | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  
-  const handleHover = (part: Part | null, event?: THREE.Event) => {
+
+  // Update mouse position from global storage when parts are hovered
+  useEffect(() => {
+    if ((window as any).canvasMousePos) {
+      setMousePos((window as any).canvasMousePos);
+    }
+  }, [hoveredPart]);
+
+  const handleHover = (part: Part | null) => {
     setHoveredPart(part);
     useDesignStore.getState().setHoveredPartId(part?.id || null);
-    
-    if (event && part) {
-      // Get screen coordinates for hover card
-      const mouseEvent = event as any; // Three.js event doesn't have proper typing for mouse events
-      if (mouseEvent.clientX && mouseEvent.clientY) {
-        // Find the canvas element in the DOM
-        const canvas = document.querySelector('canvas');
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect();
-          setMousePos({
-            x: mouseEvent.clientX - rect.left,
-            y: mouseEvent.clientY - rect.top,
-          });
-        }
-      }
-    }
   };
   
   // Position parts in 3D space
@@ -214,49 +209,76 @@ function Scene() {
           onHover={handleHover}
         />
       ))}
-      
-      {hoveredPart && (
-        <Html>
-          <PartHoverCard part={hoveredPart} position={mousePos} />
-        </Html>
-      )}
-      
+
+      {/* 3D Merge Target Overlay - toggleable functionality */}
+      <MergeTargetOverlay enabled={ENABLE_3D_MERGE_TARGETS} />
+
       <OrbitControls enablePan enableZoom enableRotate />
     </>
   );
 }
 
 export function Canvas3D() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { hoveredPartId } = useDesignStore();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mousePos = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      // Store mouse position globally for the Scene component to use
+      (window as any).canvasMousePos = mousePos;
+      setMousePos(mousePos);
+    }
+  }, []);
+
+  // Get the hovered part from the analysis
+  const { analysis } = useDesignStore();
+  const hoveredPart = hoveredPartId ? analysis.parts.find(p => p.id === hoveredPartId) : null;
+
   return (
-    <div className="w-full h-full bg-gray-100 relative">
+    <div
+      ref={containerRef}
+      className="w-full h-full canvas-3d-bg relative"
+      onMouseMove={handleMouseMove}
+    >
       <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
         <Suspense fallback={null}>
           <Scene />
         </Suspense>
       </Canvas>
-      
+
+      {/* Hover card - outside of Canvas for proper positioning */}
+      {hoveredPart && (
+        <PartHoverCard part={hoveredPart} position={mousePos} />
+      )}
+
       {/* Legend */}
       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 text-xs">
         <h3 className="font-semibold mb-2">Parts Legend</h3>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-sm"></div>
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#a0522d' }}></div>
             <span>Top/Bottom</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-amber-500 rounded-sm"></div>
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#8b4513' }}></div>
             <span>Sides/Verticals</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#d2691e' }}></div>
             <span>Shelves</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-gray-500 rounded-sm"></div>
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#654321' }}></div>
             <span>Back</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-500 rounded-sm opacity-70"></div>
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#cd853f' }}></div>
             <span>Doors</span>
           </div>
         </div>
