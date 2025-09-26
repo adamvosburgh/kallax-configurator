@@ -66,56 +66,74 @@ function calculateHorizontalSegments(
   for (let r = 1; r < rows; r++) {
     const verticalCols = Array.from(presentVerticals).sort((a, b) => a - b);
 
-    // Find all cells that need shelf support at this row boundary
-    // A cell needs shelf support if it's not vertically merged with the cell above/below
-    const needsShelfSupport: boolean[] = new Array(cols).fill(false);
+    // Find horizontal merges that affect this row boundary
+    const horizontalMergesAtRow = merges.filter(merge =>
+      merge.c1 > merge.c0 && // spans multiple columns (is horizontal)
+      ((merge.r0 <= r - 1 && merge.r1 >= r - 1) || // merge in row above boundary
+       (merge.r0 <= r && merge.r1 >= r)) // merge in row below boundary
+    );
 
-    for (let c = 0; c < cols; c++) {
-      if (!areCellsMerged(r - 1, c, r, c, merges)) {
-        needsShelfSupport[c] = true;
-      }
-    }
+    // Track which areas are covered by extended shelves to avoid duplicates
+    const coveredRanges: Array<{ start: number; end: number }> = [];
 
-    // Group consecutive cells that need shelf support into shelf regions
-    const shelfRegions: Array<{ start: number; end: number }> = [];
-    let regionStart = -1;
-
-    for (let c = 0; c <= cols; c++) { // go to cols+1 to handle end case
-      if (c < cols && needsShelfSupport[c]) {
-        if (regionStart === -1) {
-          regionStart = c;
-        }
-      } else {
-        if (regionStart !== -1) {
-          shelfRegions.push({ start: regionStart, end: c });
-          regionStart = -1;
+    // First, handle areas with horizontal merges - these may need extended shelves
+    for (const merge of horizontalMergesAtRow) {
+      // Check if there's a vertical merge that would eliminate the need for a shelf
+      let hasVerticalMerge = false;
+      for (let c = merge.c0; c <= merge.c1; c++) {
+        if (areCellsMerged(r - 1, c, r, c, merges)) {
+          hasVerticalMerge = true;
+          break;
         }
       }
-    }
 
-    // For each shelf region, create segments between the appropriate verticals
-    for (const region of shelfRegions) {
-      // Find the vertical boundaries that encompass this shelf region
-      // We need to extend the shelf to the nearest verticals on either side
+      if (!hasVerticalMerge) {
+        // Find the span of this shelf - it should extend to the nearest verticals
+        const startCol = verticalCols.filter(col => col <= merge.c0).pop() || 0;
+        const endCol = verticalCols.find(col => col > merge.c1) || cols;
 
-      // Find the vertical at or before the start of the region
-      const startVertical = verticalCols.filter(col => col <= region.start).pop() || 0;
-
-      // Find the vertical at or after the end of the region
-      const endVertical = verticalCols.find(col => col >= region.end) || cols;
-
-      // Only create a segment if we have a valid span
-      if (startVertical < endVertical) {
-        // Check if this exact segment already exists (to avoid duplicates)
-        const exists = segments.some(seg =>
-          seg.row === r && seg.colStart === startVertical && seg.colEnd === endVertical
+        // Check if this range is already covered
+        const alreadyCovered = coveredRanges.some(range =>
+          range.start === startCol && range.end === endCol
         );
 
-        if (!exists) {
+        if (!alreadyCovered) {
           segments.push({
             row: r,
-            colStart: startVertical,
-            colEnd: endVertical,
+            colStart: startCol,
+            colEnd: endCol,
+          });
+          coveredRanges.push({ start: startCol, end: endCol });
+        }
+      }
+    }
+
+    // Then, handle normal segments between verticals that aren't covered by extended shelves
+    for (let i = 0; i < verticalCols.length - 1; i++) {
+      const colStart = verticalCols[i];
+      const colEnd = verticalCols[i + 1];
+
+      // Check if this segment is already covered by an extended shelf
+      const alreadyCovered = coveredRanges.some(range =>
+        colStart >= range.start && colEnd <= range.end
+      );
+
+      if (!alreadyCovered) {
+        // Check if there's a vertical merge across this row boundary
+        let hasVerticalMerge = false;
+        for (let c = colStart; c < colEnd; c++) {
+          if (areCellsMerged(r - 1, c, r, c, merges)) {
+            hasVerticalMerge = true;
+            break;
+          }
+        }
+
+        // Only add shelf segment if there's no vertical merge
+        if (!hasVerticalMerge) {
+          segments.push({
+            row: r,
+            colStart,
+            colEnd,
           });
         }
       }
