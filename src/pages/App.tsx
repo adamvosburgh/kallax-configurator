@@ -46,21 +46,42 @@ export function App() {
 
   return (
     <div className="h-screen bg-white overflow-hidden flex flex-col">
-      {/* Header - dimensions.com inspired */}
-      <header className="border-b border-black px-6 py-4 bg-white flex-shrink-0">
-        <div className="flex items-center justify-between">
+      {/* Header */}
+      <header className="flex-shrink-0" style={{ backgroundColor: '#fafafa', height: '3.5rem', display: 'flex', alignItems: 'center', paddingLeft: '1.0rem', paddingRight: '1.0rem', borderBottom: '1px solid #e5e7eb' }}>
+        <div className="flex items-center justify-between w-full">
           <div>
-            <h1 className="text-2xl font-mono font-bold text-black">Kallax Configurator</h1>
-            <p className="text-sm font-mono text-gray-600">Design modular shelving with IKEA-style instructions</p>
+            <h1 className="text-lg font-mono font-semibold text-black">Kallax Configurator</h1>
+            {/* <p className="text-xs font-mono text-gray-600 mt-0.5">Design modular shelving with IKEA-style instructions</p> */}
           </div>
-          <div className="flex items-center">
-            <div className="text-xs font-mono text-gray-500">
-              Open source • MIT License
-            </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/adamvosburgh/kallax-configurator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
+            >
+              GitHub
+            </a>
+            <span className="text-gray-400">•</span>
+            <a
+              href="mailto:your.email@example.com"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
+            >
+              Email
+            </a>
+            <span className="text-gray-400">•</span>
+            <a
+              href="https://yourwebsite.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
+            >
+              Website
+            </a>
           </div>
         </div>
       </header>
-      
+
       {/* Main 3D View - Full screen background */}
       <div className="flex-1 relative bg-white min-h-0">
         {_hasHydrated ? (
@@ -74,68 +95,81 @@ export function App() {
           </div>
         )}
       </div>
-      
-      {/* Floating Windows */}
-      <FloatingWindow
-        id="grid-layout"
-        title="Grid Layout"
-        defaultPosition={{ x: 50, y: 120 }}
-        defaultSize={{ width: 500, height: 800 }}
-        collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
-      >
-        <GridEditor />
-      </FloatingWindow>
-      
-      <FloatingWindow
-        id="controls"
-        title="Controls"
-        defaultPosition={{ x: 570, y: 120 }}
-        defaultSize={{ width: 480, height: 850 }}
-        collapsedPreview={params.hasBack ? 'with back' : 'no back'}
-      >
-        <ControlsPanel />
-      </FloatingWindow>
-      
-      <FloatingWindow
-        id="export"
-        title="Export"
-        defaultPosition={{ x: 50, y: 500 }}
-        defaultSize={{ width: 420, height: 350 }}
-        collapsedPreview="PDF Export"
-      >
-        <ExportPanel />
-      </FloatingWindow>
 
-      <FloatingWindow
-        id="key"
-        title="Parts Key"
-        defaultPosition={{ x: 1070, y: 120 }}
-        defaultSize={{ width: 280, height: 450 }}
-        collapsedPreview="3D Parts Legend"
-      >
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="color-swatch swatch-top-bottom"></div>
-            <span className="font-mono">Top/Bottom</span>
+      {/* Left Docked Panel */}
+      <div className="docked-container left">
+        <FloatingWindow
+          id="grid-layout"
+          title="Grid Layout"
+          defaultPosition={{ x: 50, y: 120 }}
+          defaultSize={{ width: 500, height: 800 }}
+          collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 0 }}
+        >
+          <GridEditor />
+        </FloatingWindow>
+
+        <FloatingWindow
+          id="key"
+          title="Parts Key"
+          defaultPosition={{ x: 1070, y: 120 }}
+          defaultSize={{ width: 280, height: 450 }}
+          collapsedPreview="3D Parts Legend"
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 1 }}
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="color-swatch swatch-top-bottom"></div>
+              <span className="text-xs text-mono">Top/Bottom</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="color-swatch swatch-sides"></div>
+              <span className="text-xs text-mono">Sides</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="color-swatch swatch-sides"></div>
+              <span className="text-xs text-mono">Vertical Dividers</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="color-swatch swatch-doors"></div>
+              <span className="text-xs text-mono">Doors</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="color-swatch swatch-back"></div>
+              <span className="text-xs text-mono">Back Panels</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="color-swatch swatch-sides"></div>
-            <span className="font-mono">Sides</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="color-swatch swatch-sides"></div>
-            <span className="font-mono">Vertical Dividers</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="color-swatch swatch-doors"></div>
-            <span className="font-mono">Doors</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="color-swatch swatch-back"></div>
-            <span className="font-mono">Back Panels</span>
-          </div>
-        </div>
-      </FloatingWindow>
+        </FloatingWindow>
+      </div>
+
+      {/* Right Docked Panel */}
+      <div className="docked-container right">
+        <FloatingWindow
+          id="controls"
+          title="Controls"
+          defaultPosition={{ x: 570, y: 120 }}
+          defaultSize={{ width: 480, height: 850 }}
+          collapsedPreview={params.hasBack ? 'with back' : 'no back'}
+          defaultDocked={true}
+          dockedPosition={{ side: 'right', order: 0 }}
+        >
+          <ControlsPanel />
+        </FloatingWindow>
+
+        <FloatingWindow
+          id="export"
+          title="Export"
+          defaultPosition={{ x: 50, y: 500 }}
+          defaultSize={{ width: 420, height: 350 }}
+          collapsedPreview="PDF Export"
+          defaultDocked={true}
+          dockedPosition={{ side: 'right', order: 1 }}
+        >
+          <ExportPanel />
+        </FloatingWindow>
+      </div>
     </div>
   );
 }

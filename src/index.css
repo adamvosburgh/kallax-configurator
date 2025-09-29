@@ -4,9 +4,10 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   background-color: #f8fafc;
 }
+
 
 #root {
   width: 100vw;
@@ -14,17 +15,90 @@ body {
   overflow: hidden;
 }
 
-/* Custom component classes */
+/* =====================
+   FLOATING WINDOWS
+   ===================== */
 .floating-window {
   position: fixed;
   z-index: 40;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background-color: white;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  border: 3px solid #3b82f6;
-  padding-top: 5px;
-  padding-left: 30px;
-  padding-right: 30px;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.floating-window.docked {
+  position: relative;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  height: auto;
+  width: 100% !important;
+  left: 0 !important;
+  top: 0 !important;
+}
+
+.floating-window.docked:last-child {
+  border-bottom: none;
+}
+
+.floating-window-header {
+  cursor: move;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #fafafa;
+  padding: 0.75rem 1rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.floating-window.docked .floating-window-header {
+  cursor: default;
+  border-radius: 0;
+}
+
+.floating-window-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.floating-window-content {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.floating-window.docked.collapsed .floating-window-content {
+  display: none;
+}
+
+.floating-window.docked.collapsed {
+  height: auto;
+}
+
+.docked-container {
+  position: fixed;
+  top: 3.6rem;
+  bottom: 0;
+  width: 320px;
+  overflow-y: auto;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.docked-container.left {
+  left: 0;
+}
+
+.docked-container.right {
+  right: 0;
+  border-right: none;
+  border-left: 1px solid #e5e7eb;
 }
 
 .floating-window-collapsed {
@@ -32,282 +106,321 @@ body {
   left: 1rem;
   z-index: 50;
   cursor: pointer;
-  border-radius: 1rem;
+  border-radius: 0.375rem;
   background-color: white;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  border: 3px solid #3b82f6;
-  padding: 10px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.15s ease;
 }
 
+.floating-window-collapsed:hover {
+  box-shadow: 0 6px 10px -2px rgb(0 0 0 / 0.15);
+  border-color: #d1d5db;
+}
+
+/* =====================
+   HOVER CARD
+   ===================== */
 .hover-card {
   position: absolute;
   z-index: 50;
   pointer-events: none;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background-color: white;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-  border: 3px solid #3b82f6;
-  padding: 10px;
+  box-shadow: 0 10px 20px -5px rgb(0 0 0 / 0.2);
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  min-width: 12rem;
 }
 
-.canvas-3d-bg {
-  background-color: #fefefe;
-}
-
-.merge-plus-icon {
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.merge-plus-icon:hover {
-  opacity: 0.9;
-}
-
-
-/* Add more breathing room to floating window content */
-.floating-window .space-y-1 > * + * {
-  margin-top: 0.75rem !important;
-}
-
-.floating-window .space-y-2 > * + * {
-  margin-top: 1rem !important;
-}
-
-.floating-window .space-y-4 > * + * {
-  margin-top: 1.5rem !important;
-}
-
-.floating-window .space-y-6 > * + * {
-  margin-top: 2rem !important;
-}
-
-.floating-window .mt-2 {
-  margin-top: 1rem !important;
-}
-
-.floating-window .mt-4 {
-  margin-top: 1.5rem !important;
-}
-
-.floating-window .mb-2 {
-  margin-bottom: 1rem !important;
-}
-
-.floating-window .mb-4 {
-  margin-bottom: 1.5rem !important;
-}
-
-/* Page styling elements */
-.app-header {
-  border-bottom: 1px solid black;
-  padding: 1rem 1.5rem;
-  background-color: white;
-  flex-shrink: 0;
-}
-
-.app-title {
-  font-size: 1.5rem;
+/* =====================
+   BUTTONS
+   ===================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-weight: bold;
-  color: black;
-}
-
-.app-subtitle {
-  font-size: 0.875rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  color: #4b5563;
-}
-
-.app-license {
-  font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  color: #6b7280;
-}
-
-/* Button styles */
-.btn-primary {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  border: 1px solid black;
-  border-radius: 0;
-  background-color: white;
-  color: black;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background-color: black;
-  color: white;
-}
-
-.btn-secondary {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
-  background-color: white;
-  color: #374151;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
-.btn-secondary:hover {
-  background-color: #f3f4f6;
+.btn-success {
+  background-color: #059669;
+  color: white;
+  border-color: #059669;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #047857;
+  border-color: #047857;
+}
+
+.btn-info {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 .btn-danger {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  border: 1px solid #dc2626;
-  border-radius: 0.375rem;
   background-color: #dc2626;
   color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-color: #dc2626;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
   background-color: #b91c1c;
+  border-color: #b91c1c;
 }
 
-.btn-disabled {
+.btn-accent {
+  background-color: #7c3aed;
+  color: white;
+  border-color: #7c3aed;
+}
+
+.btn-accent:hover:not(:disabled) {
+  background-color: #6d28d9;
+  border-color: #6d28d9;
+}
+
+.btn-neutral {
+  background-color: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.btn-neutral:hover:not(:disabled) {
+  background-color: #4b5563;
+  border-color: #4b5563;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+}
+
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Input and form elements */
+.btn-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border-radius: 9999px;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  border: none;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: #d1d5db;
+  color: #374151;
+}
+
+/* =====================
+   FORM ELEMENTS
+   ===================== */
 .input-field {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.625rem;
   border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   color: #111827;
+  background-color: white;
+  transition: all 0.15s ease;
+  width: 100%;
 }
 
 .input-field:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+}
+
+.input-field:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .select-field {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.625rem;
   border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   background-color: white;
   color: #111827;
   cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
 }
 
 .select-field:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+}
+
+.select-field:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .checkbox-field {
   width: 1rem;
   height: 1rem;
   cursor: pointer;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  transition: all 0.15s ease;
 }
 
-/* Labels and text */
+.checkbox-field:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* =====================
+   TYPOGRAPHY
+   ===================== */
 .form-label {
-  font-size: 0.875rem;
+  display: block;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #374151;
+  color: #4b5563;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.01em;
 }
 
 .section-title {
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
 }
 
 .text-mono {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
-/* Grid elements */
+.text-xs {
+  font-size: 0.6875rem;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.text-sm {
+  font-size: 0.8125rem;
+  padding: 2px;
+}
+
+.text-base {
+  font-size: 0.875rem;
+  padding: 2px;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+/* =====================
+   GRID ELEMENTS
+   ===================== */
 .grid-cell {
   border: 1px solid #d1d5db;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  background-color: #f9fafb;
+  background-color: #fafafa;
+  user-select: none;
 }
 
 .grid-cell:hover {
   background-color: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 .grid-cell-drag {
   background-color: #dbeafe !important;
+  border-color: #60a5fa !important;
 }
 
 .grid-cell-merged {
-  background-color: #dcfce7;
-  border: 1px solid #16a34a;
-  color: #15803d;
+  background-color: #d1fae5;
+  border: 1px solid #10b981;
+  color: #047857;
+  font-weight: 500;
 }
 
-/* Warning and info boxes */
-.warning-box {
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
+.grid-cell-merged:hover {
+  background-color: #a7f3d0;
+  border-color: #059669;
 }
 
-.warning-error {
-  background-color: #fef2f2;
-  color: #991b1b;
-}
-
-.warning-warning {
-  background-color: #fffbeb;
-  color: #92400e;
-}
-
-.warning-info {
-  background-color: #eff6ff;
-  color: #1e40af;
-}
-
-/* 3D Part Colors */
-.part-color-top-bottom {
-  color: #a0522d; /* sienna */
-}
-
-.part-color-sides {
-  color: #8b4513; /* saddle brown */
-}
-
-.part-color-shelves {
-  color: #d2691e; /* chocolate */
-}
-
-.part-color-back {
-  color: #654321; /* dark brown */
-}
-
-.part-color-door {
-  color: #cd853f; /* peru */
-}
-
-/* Color swatches for key legend */
-.color-swatch {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 0.25rem;
+/* =====================
+   INFO BOXES
+   ===================== */
+.info-box {
+  background-color: #f9fafb;
   border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.info-label {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.info-value {
+  color: #111827;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* =====================
+   COLOR SWATCHES
+   ===================== */
+.color-swatch {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
   flex-shrink: 0;
 }
 
@@ -325,4 +438,38 @@ body {
 
 .swatch-back {
   background-color: #654321 !important;
+}
+
+/* =====================
+   UTILITY CLASSES
+   ===================== */
+.canvas-3d-bg {
+  background-color: #fefefe;
+}
+
+.divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 0.75rem 0;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-row-split {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.field-row-split > * {
+  flex: 1;
 }

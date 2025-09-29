@@ -26,15 +26,13 @@ export function ControlsPanel() {
   const frameOptions: NominalThickness[] = ['1/2"', '3/4"']; // No 1/4" for frame
 
   return (
-    <div className="space-y-6 p-4 bg-white border-l border-gray-200 overflow-y-auto">
-      <h2 className="text-lg font-semibold">Configuration</h2>
-      
+    <div className="space-y-4">
       {/* Dimensions */}
       <div className="space-y-3">
-        <h3 className="font-medium text-sm text-gray-700">Dimensions</h3>
-        <div className="space-y-2">
-          <div>
-            <label className="block text-xs font-medium text-gray-600">
+        <h3 className="section-title">Dimensions</h3>
+        <div className="space-y-3">
+          <div className="field-group">
+            <label className="form-label">
               Interior Clearance (inches)
             </label>
             <input
@@ -42,11 +40,11 @@ export function ControlsPanel() {
               step="0.125"
               value={params.interiorClearanceInches}
               onChange={(e) => setInteriorClearance(parseFloat(e.target.value) || 13.25)}
-              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              className="input-field"
             />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600">
+          <div className="field-group">
+            <label className="form-label">
               Depth (inches)
             </label>
             <input
@@ -54,35 +52,37 @@ export function ControlsPanel() {
               step="0.125"
               value={params.depthInches}
               onChange={(e) => setDepth(parseFloat(e.target.value) || 15.375)}
-              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+              className="input-field"
             />
           </div>
         </div>
       </div>
 
+      <div className="divider" />
+
       {/* Material Thicknesses */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium text-sm text-gray-700">Materials</h3>
+          <h3 className="section-title">Materials</h3>
           <button
             onClick={useRecommendedMaterials}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="btn btn-info btn-xs"
           >
             Use Recommended
           </button>
         </div>
-        
+
         <div className="space-y-3">
           {/* Frame Material */}
-          <div>
-            <label className="block text-xs font-medium text-gray-600">
+          <div className="field-group">
+            <label className="form-label">
               Frame Thickness
             </label>
-            <div className="flex gap-2">
+            <div className="field-row-split">
               <select
                 value={params.materials.frame.nominal}
                 onChange={(e) => setFrameThickness(createThicknessMap(e.target.value as NominalThickness))}
-                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                className="select-field"
               >
                 {frameOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
@@ -96,22 +96,23 @@ export function ControlsPanel() {
                   ...params.materials.frame,
                   actualInches: parseFloat(e.target.value) || THICKNESS_MAP[params.materials.frame.nominal]
                 })}
-                className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                className="input-field"
+                style={{ maxWidth: '5rem' }}
               />
             </div>
           </div>
 
           {/* Back Material */}
           {params.hasBack && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600">
+            <div className="field-group">
+              <label className="form-label">
                 Back Thickness
               </label>
-              <div className="flex gap-2">
+              <div className="field-row-split">
                 <select
                   value={params.materials.back?.nominal || '1/4"'}
                   onChange={(e) => setBackThickness(createThicknessMap(e.target.value as NominalThickness))}
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="select-field"
                 >
                   {nominalOptions.map(option => (
                     <option key={option} value={option}>{option}</option>
@@ -125,7 +126,8 @@ export function ControlsPanel() {
                     nominal: params.materials.back?.nominal || '1/4"',
                     actualInches: parseFloat(e.target.value) || THICKNESS_MAP['1/4"']
                   })}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="input-field"
+                  style={{ maxWidth: '5rem' }}
                 />
               </div>
             </div>
@@ -133,15 +135,15 @@ export function ControlsPanel() {
 
           {/* Door Material */}
           {params.hasDoors && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600">
+            <div className="field-group">
+              <label className="form-label">
                 Door Thickness
               </label>
-              <div className="flex gap-2">
+              <div className="field-row-split">
                 <select
                   value={params.materials.door?.nominal || '3/4"'}
                   onChange={(e) => setDoorThickness(createThicknessMap(e.target.value as NominalThickness))}
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="select-field"
                 >
                   {nominalOptions.map(option => (
                     <option key={option} value={option}>{option}</option>
@@ -155,7 +157,8 @@ export function ControlsPanel() {
                     nominal: params.materials.door?.nominal || '3/4"',
                     actualInches: parseFloat(e.target.value) || THICKNESS_MAP['3/4"']
                   })}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="input-field"
+                  style={{ maxWidth: '5rem' }}
                 />
               </div>
             </div>
@@ -163,27 +166,29 @@ export function ControlsPanel() {
         </div>
       </div>
 
+      <div className="divider" />
+
       {/* Back and Doors */}
       <div className="space-y-3">
-        <h3 className="font-medium text-sm text-gray-700">Options</h3>
-        
+        <h3 className="section-title">Options</h3>
+
         <div className="space-y-2">
-          <label className="flex items-center gap-2">
+          <label className="field-row" style={{ cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={params.hasBack}
               onChange={(e) => setHasBack(e.target.checked)}
-              className="rounded"
+              className="checkbox-field"
             />
             <span className="text-sm">Add back panel</span>
           </label>
-          
-          <label className="flex items-center gap-2">
+
+          <label className="field-row" style={{ cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={params.hasDoors}
               onChange={(e) => setHasDoors(e.target.checked)}
-              className="rounded"
+              className="checkbox-field"
             />
             <span className="text-sm">Add doors</span>
           </label>
@@ -191,24 +196,24 @@ export function ControlsPanel() {
 
         {/* Door Options */}
         {params.hasDoors && (
-          <div className="pl-4 space-y-2 border-l-2 border-gray-200">
-            <div>
-              <label className="block text-xs font-medium text-gray-600">
+          <div className="pl-4 space-y-3 border-l-2 border-gray-200">
+            <div className="field-group">
+              <label className="form-label">
                 Door Style
               </label>
               <select
                 value={params.doorMode.type}
                 onChange={(e) => setDoorMode(e.target.value as 'inset' | 'overlay')}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="select-field"
               >
                 <option value="inset">Inset</option>
                 <option value="overlay">Overlay</option>
               </select>
             </div>
-            
+
             {params.doorMode.type === 'inset' && (
-              <div>
-                <label className="block text-xs font-medium text-gray-600">
+              <div className="field-group">
+                <label className="form-label">
                   Reveal (inches)
                 </label>
                 <input
@@ -216,14 +221,14 @@ export function ControlsPanel() {
                   step="0.0625"
                   value={params.doorMode.revealInches || 0.0625}
                   onChange={(e) => setDoorReveal(parseFloat(e.target.value) || 0.0625)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="input-field"
                 />
               </div>
             )}
-            
+
             {params.doorMode.type === 'overlay' && (
-              <div>
-                <label className="block text-xs font-medium text-gray-600">
+              <div className="field-group">
+                <label className="form-label">
                   Overlay (inches)
                 </label>
                 <input
@@ -231,7 +236,7 @@ export function ControlsPanel() {
                   step="0.125"
                   value={params.doorMode.overlayInches || 0.25}
                   onChange={(e) => setDoorOverlay(parseFloat(e.target.value) || 0.25)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  className="input-field"
                 />
               </div>
             )}
@@ -239,37 +244,60 @@ export function ControlsPanel() {
         )}
       </div>
 
+      <div className="divider" />
+
       {/* Exterior Dimensions */}
       <div className="space-y-2">
-        <h3 className="font-medium text-sm text-gray-700">Exterior Dimensions</h3>
-        <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
-          <div>Width: {toFraction32(dimensions.extWidth)}</div>
-          <div>Height: {toFraction32(dimensions.extHeight)}</div>
-          <div>Depth: {toFraction32(dimensions.extDepth)}</div>
+        <h3 className="section-title">Exterior Dimensions</h3>
+        <div className="info-box space-y-1">
+          <div className="info-row">
+            <span className="info-label">Width:</span>
+            <span className="info-value">{toFraction32(dimensions.extWidth)}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Height:</span>
+            <span className="info-value">{toFraction32(dimensions.extHeight)}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Depth:</span>
+            <span className="info-value">{toFraction32(dimensions.extDepth)}</span>
+          </div>
         </div>
       </div>
 
       {/* Material Estimate */}
       <div className="space-y-2">
-        <h3 className="font-medium text-sm text-gray-700">Material Estimate</h3>
-        <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
-          <div>Frame: {analysis.estimate.frameBoardFeet.toFixed(1)} board feet</div>
+        <h3 className="section-title">Material Estimate</h3>
+        <div className="info-box space-y-1">
+          <div className="info-row">
+            <span className="info-label">Frame:</span>
+            <span className="info-value">{analysis.estimate.frameBoardFeet.toFixed(1)} bd ft</span>
+          </div>
           {analysis.estimate.hasBack && (
-            <div>Back: {analysis.estimate.backSquareFeet.toFixed(1)} sq ft</div>
+            <div className="info-row">
+              <span className="info-label">Back:</span>
+              <span className="info-value">{analysis.estimate.backSquareFeet.toFixed(1)} sq ft</span>
+            </div>
           )}
           {analysis.estimate.totalDoors > 0 && (
-            <div>Doors: {analysis.estimate.doorSquareFeet.toFixed(1)} sq ft</div>
+            <div className="info-row">
+              <span className="info-label">Doors:</span>
+              <span className="info-value">{analysis.estimate.doorSquareFeet.toFixed(1)} sq ft</span>
+            </div>
           )}
-          <div className="text-gray-600">
+          <div className="divider" style={{ margin: '0.5rem 0' }} />
+          <div className="text-xs text-gray-600">
             {analysis.estimate.totalFrameParts} frame parts, {analysis.estimate.totalDoors} doors
           </div>
         </div>
       </div>
 
+      <div className="divider" />
+
       {/* Reset Button */}
       <button
         onClick={reset}
-        className="w-full px-3 py-2 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+        className="btn btn-neutral w-full"
       >
         Reset to Default
       </button>

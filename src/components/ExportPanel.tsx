@@ -74,66 +74,68 @@ export function ExportPanel() {
   };
   
   return (
-    <div className="space-y-4 p-4 bg-white border-t border-gray-200">
-      <h3 className="font-medium text-sm text-gray-700">Export & Share</h3>
-      
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={handleExportCSV}
-          className="px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+          className="btn btn-success btn-sm"
         >
           Cut List (CSV)
         </button>
-        
+
         <button
           onClick={handleExportJSON}
-          className="px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          className="btn btn-info btn-sm"
         >
           Design (JSON)
         </button>
-        
+
         <button
           onClick={handleExportPDF}
           disabled={isGenerating}
-          className="col-span-2 px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="btn btn-danger btn-sm col-span-2"
         >
           {isGenerating ? 'Generating PDF...' : 'Instructions (PDF)'}
         </button>
-        
+
         <button
           onClick={handleShareLink}
-          className="col-span-2 px-3 py-2 text-sm bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+          className="btn btn-accent btn-sm col-span-2"
         >
           Share Design Link
         </button>
       </div>
-      
+
+      <div className="divider" />
+
       {/* Summary Info */}
-      <div className="text-xs text-gray-600 space-y-1">
-        <div className="flex justify-between">
-          <span>Total Parts:</span>
-          <span>{analysis.parts.length}</span>
+      <div className="info-box">
+        <div className="info-row">
+          <span className="info-label">Total Parts:</span>
+          <span className="info-value">{analysis.parts.length}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Frame Parts:</span>
-          <span>{analysis.estimate.totalFrameParts}</span>
+        <div className="info-row">
+          <span className="info-label">Frame Parts:</span>
+          <span className="info-value">{analysis.estimate.totalFrameParts}</span>
         </div>
         {analysis.estimate.totalDoors > 0 && (
-          <div className="flex justify-between">
-            <span>Doors:</span>
-            <span>{analysis.estimate.totalDoors}</span>
+          <div className="info-row">
+            <span className="info-label">Doors:</span>
+            <span className="info-value">{analysis.estimate.totalDoors}</span>
           </div>
         )}
-        <div className="flex justify-between">
-          <span>Warnings:</span>
-          <span className={analysis.warnings.length > 0 ? 'text-yellow-600' : 'text-green-600'}>
+        <div className="info-row">
+          <span className="info-label">Warnings:</span>
+          <span className={`info-value ${analysis.warnings.length > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
             {analysis.warnings.length}
           </span>
         </div>
       </div>
-      
+
+      <div className="divider" />
+
       {/* File format info */}
-      <div className="text-xs text-gray-500 space-y-1 pt-2 border-t border-gray-200">
+      <div className="text-xs text-gray-500 space-y-1">
         <div><strong>CSV:</strong> Cut list with dimensions for fabrication</div>
         <div><strong>JSON:</strong> Complete design data for backup/import</div>
         <div><strong>PDF:</strong> IKEA-style assembly instructions</div>

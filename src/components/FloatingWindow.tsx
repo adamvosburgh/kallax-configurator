@@ -8,27 +8,33 @@ interface FloatingWindowProps {
   defaultPosition?: { x: number; y: number };
   defaultSize?: { width: number; height: number };
   collapsedPreview?: string;
+  defaultDocked?: boolean;
+  dockedPosition?: { side: 'left' | 'right'; order: number };
 }
 
-export function FloatingWindow({ 
-  id, 
-  title, 
-  children, 
+export function FloatingWindow({
+  id,
+  title,
+  children,
   defaultPosition = { x: 100, y: 100 },
   defaultSize = { width: 320, height: 400 },
-  collapsedPreview
+  collapsedPreview,
+  defaultDocked = false,
+  dockedPosition
 }: FloatingWindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  
-  const { windows, updateWindow, toggleCollapse } = useFloatingWindowStore();
+
+  const { windows, updateWindow, toggleCollapse, toggleDocked } = useFloatingWindowStore();
   const windowState = windows[id] || {
     position: defaultPosition,
     size: defaultSize,
     isCollapsed: false,
-    isVisible: true
+    isVisible: true,
+    isDocked: defaultDocked,
+    dockedPosition
   };
 
 
@@ -38,10 +44,12 @@ export function FloatingWindow({
         position: defaultPosition,
         size: defaultSize,
         isCollapsed: false,
-        isVisible: true
+        isVisible: true,
+        isDocked: defaultDocked,
+        dockedPosition
       });
     }
-  }, [id, defaultPosition, defaultSize, windows, updateWindow]);
+  }, [id, defaultPosition, defaultSize, defaultDocked, dockedPosition, windows, updateWindow]);
 
   // Auto-show windows on mount
   useEffect(() => {
@@ -52,7 +60,8 @@ export function FloatingWindow({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!headerRef.current?.contains(e.target as Node)) return;
-    
+    if (windowState.isDocked) return; // Don't allow dragging when docked
+
     setIsDragging(true);
     const rect = windowRef.current?.getBoundingClientRect();
     if (rect) {
@@ -95,29 +104,34 @@ export function FloatingWindow({
     toggleCollapse(id);
   };
 
+  const handleToggleDocked = () => {
+    toggleDocked(id);
+  };
+
   if (!windowState.isVisible) return null;
 
-  // Collapsed state - dock to left side
-  if (windowState.isCollapsed) {
+  // Floating collapsed state (only when undocked)
+  if (windowState.isCollapsed && !windowState.isDocked) {
     return (
-      <div 
+      <div
         className="floating-window-collapsed"
-        style={{ 
+        style={{
           top: `${Math.max(120, windowState.position.y)}px`,
-          left: '16px' 
         }}
         onClick={handleToggleCollapse}
       >
-        <h2 className="text-sm font-mono font-medium text-black">{title}</h2>
+        <h2 className="text-xs font-medium text-mono">{title}</h2>
       </div>
     );
   }
 
+  const windowClasses = `floating-window ${windowState.isDocked ? 'docked' : ''} ${windowState.isCollapsed ? 'collapsed' : ''}`;
+
   return (
     <div
       ref={windowRef}
-      className="floating-window"
-      style={{
+      className={windowClasses}
+      style={windowState.isDocked ? {} : {
         left: `${windowState.position.x}px`,
         top: `${windowState.position.y}px`,
         width: `${windowState.size.width}px`,
@@ -126,28 +140,45 @@ export function FloatingWindow({
       onMouseDown={handleMouseDown}
     >
       {/* Header */}
-      <div 
+      <div
         ref={headerRef}
-        className="cursor-move border-b border-gray-200 flex items-center justify-between bg-white mb-6"
-        style={{ borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem', padding: '24px 30px' }}
+        className="floating-window-header"
       >
-        <h3 className="font-mono text-sm font-medium text-black">{title}</h3>
-        <div className="flex items-center">
+        <h3 className="text-xs font-medium text-mono">{title}</h3>
+        <div className="floating-window-header-actions">
+          {!windowState.isDocked && (
+            <button
+              onClick={handleToggleDocked}
+              className="btn-icon"
+              title="Dock"
+            >
+              <span className="text-xs">📌</span>
+            </button>
+          )}
           <button
             onClick={handleToggleCollapse}
-            className="w-6 h-6 rounded-full bg-gray-300 hover:bg-gray-400 transition-colors flex items-center justify-center"
-            title="Minimize"
+            className="btn-icon"
+            title={windowState.isCollapsed ? "Expand" : "Collapse"}
           >
-            <span className="text-xs font-bold text-gray-700">−</span>
+            <span className="text-xs font-bold">{windowState.isCollapsed ? '+' : '−'}</span>
           </button>
+          {windowState.isDocked && (
+            <button
+              onClick={handleToggleDocked}
+              className="btn-icon"
+              title="Undock"
+            >
+              <span className="text-xs">↗</span>
+            </button>
+          )}
         </div>
       </div>
-      
+
       {/* Content */}
-      <div className="overflow-auto" style={{ height: 'calc(100% - 110px)' }}>
+      <div className="floating-window-content" style={windowState.isDocked ? {} : { height: 'calc(100% - 3.25rem)' }}>
         {children}
       </div>
-      
+
     </div>
   );
 }
