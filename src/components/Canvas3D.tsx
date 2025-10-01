@@ -26,8 +26,8 @@ interface PartMeshProps {
 
 function PartMesh({ part, position, onHover }: PartMeshProps) {
   const [, setHovered] = useState(false);
-  const { selectedPartId, hoveredPartId } = useDesignStore();
-  
+  const { selectedPartId, hoveredPartId, params } = useDesignStore();
+
   const isSelected = selectedPartId === part.id;
   const isHovered = hoveredPartId === part.id;
   
@@ -69,29 +69,83 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
         return '#deb887'; // burlywood
     }
   };
-  
+
+  // Calculate hardware position for doors
+  const getHardwarePosition = (): [number, number, number] | null => {
+    if (part.role !== 'Door' || !params.doorHardware) return null;
+
+    const { position: hwPosition, insetInches } = params.doorHardware;
+    const inset = insetInches * 0.1; // Convert to scene units
+
+    // Door dimensions in scene units
+    const width = part.lengthIn * 0.1;
+    const height = part.widthIn * 0.1;
+
+    // Calculate position relative to door center
+    let x = 0;
+    let z = 0;
+
+    // Horizontal position
+    if (hwPosition.includes('left')) {
+      x = -width / 2 + inset;
+    } else if (hwPosition.includes('right')) {
+      x = width / 2 - inset;
+    } else {
+      x = 0; // center
+    }
+
+    // Vertical position
+    if (hwPosition.includes('top')) {
+      z = -height / 2 + inset;
+    } else if (hwPosition.includes('bottom')) {
+      z = height / 2 - inset;
+    } else {
+      z = 0; // middle
+    }
+
+    // y position is slightly in front of the door surface
+    const y = part.thicknessIn * 0.1 / 2 + 0.01;
+
+    return [x, y, z];
+  };
+
+  const hardwarePos = getHardwarePosition();
+  const hardwareDiameter = params.doorHardware?.type === 'pull-hole' ? 1 : 0.125; // in inches
+  const hardwareRadius = (hardwareDiameter * 0.1) / 2; // Convert to scene units
+
   return (
-    <mesh
-      position={position}
-      rotation={getRotation()}
-      scale={[scaleX, scaleY, scaleZ]}
-      onPointerEnter={(e) => {
-        setHovered(true);
-        onHover(part, e);
-        e.stopPropagation();
-      }}
-      onPointerLeave={() => {
-        setHovered(false);
-        onHover(null);
-      }}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial
-        color={getColor()}
-        transparent
-        opacity={part.role === 'Door' ? 0.7 : 0.9}
-      />
-    </mesh>
+    <group position={position} rotation={getRotation()}>
+      <mesh
+        scale={[scaleX, scaleY, scaleZ]}
+        onPointerEnter={(e) => {
+          setHovered(true);
+          onHover(part, e);
+          e.stopPropagation();
+        }}
+        onPointerLeave={() => {
+          setHovered(false);
+          onHover(null);
+        }}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial
+          color={getColor()}
+          transparent
+          opacity={part.role === 'Door' ? 0.7 : 0.9}
+        />
+      </mesh>
+
+      {/* Door hardware circle */}
+      {hardwarePos && (
+        <mesh position={hardwarePos} rotation={[Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[hardwareRadius, 32]} />
+          <meshStandardMaterial
+            color="#333333"
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+    </group>
   );
 }
 

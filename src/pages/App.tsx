@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Canvas3D } from '../components/Canvas3D';
 import { GridEditor } from '../components/GridEditor';
 import { ControlsPanel } from '../components/ControlsPanel';
+import { OptionsPanel } from '../components/OptionsPanel';
 import { ExportPanel } from '../components/ExportPanel';
 import { FloatingWindow } from '../components/FloatingWindow';
 import { useDesignStore } from '../state/useDesignStore';
@@ -111,13 +112,25 @@ export function App() {
         </FloatingWindow>
 
         <FloatingWindow
+          id="options"
+          title="Options"
+          defaultPosition={{ x: 570, y: 300 }}
+          defaultSize={{ width: 420, height: 600 }}
+          collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 1 }}
+        >
+          <OptionsPanel />
+        </FloatingWindow>
+
+        <FloatingWindow
           id="key"
           title="Parts Key"
           defaultPosition={{ x: 1070, y: 120 }}
           defaultSize={{ width: 280, height: 450 }}
           collapsedPreview="3D Parts Legend"
           defaultDocked={true}
-          dockedPosition={{ side: 'left', order: 1 }}
+          dockedPosition={{ side: 'left', order: 2 }}
         >
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -151,7 +164,7 @@ export function App() {
           title="Controls"
           defaultPosition={{ x: 570, y: 120 }}
           defaultSize={{ width: 480, height: 850 }}
-          collapsedPreview={params.hasBack ? 'with back' : 'no back'}
+          collapsedPreview="Materials & Dimensions"
           defaultDocked={true}
           dockedPosition={{ side: 'right', order: 0 }}
         >

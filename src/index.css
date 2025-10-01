@@ -473,3 +473,30 @@ body {
 .field-row-split > * {
   flex: 1;
 }
+
+/* =====================
+   DOOR HARDWARE SELECTOR
+   ===================== */
+.door-hardware-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.door-hardware-btn:hover {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.hardware-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: currentColor;
+}

@@ -4,6 +4,7 @@
  */
 
 import type { SheetLayout, OversizedPart } from './ripGenerator';
+import type { DesignParams } from './types';
 
 // SVG dimensions and styling - tight around content
 const MARGIN = 40; // Minimal margin
@@ -37,12 +38,12 @@ function inchesToSvgY(inches: number): number {
 /**
  * Generate SVG for a single sheet layout
  */
-export function generateSheetSvg(sheet: SheetLayout): string {
+export function generateSheetSvg(sheet: SheetLayout, params: DesignParams): string {
   const elements: string[] = [];
-  
+
   // SVG header
   elements.push(`<svg width="${SVG_WIDTH}" height="${SVG_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`);
-  
+
   // Add styles
   elements.push(`
     <defs>
@@ -53,6 +54,7 @@ export function generateSheetSvg(sheet: SheetLayout): string {
         .rip-line { stroke: #000; stroke-width: 1; stroke-dasharray: 5,5; }
         .dimension-text { font-family: Arial, sans-serif; font-size: 9px; text-anchor: middle; }
         .sheet-label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }
+        .door-hardware { fill: none; stroke: #333; stroke-width: 1; }
       </style>
     </defs>
   `);
@@ -129,6 +131,39 @@ export function generateSheetSvg(sheet: SheetLayout): string {
         elements.push(`<text x="${centerX}" y="${lineY}" class="part-text">${line}</text>`);
       });
     }
+
+    // Add door hardware circle if this is a door part
+    if (part.originalPart && part.originalPart.role === 'Door' && params.doorHardware) {
+      const { position: hwPosition, type, insetInches } = params.doorHardware;
+
+      // Calculate hardware position relative to part rectangle
+      let hardwareX = 0;
+      let hardwareY = 0;
+
+      // Horizontal position (based on part width)
+      if (hwPosition.includes('left')) {
+        hardwareX = x + (insetInches * SCALE_X);
+      } else if (hwPosition.includes('right')) {
+        hardwareX = x + width - (insetInches * SCALE_X);
+      } else {
+        hardwareX = centerX; // center
+      }
+
+      // Vertical position (based on part length)
+      if (hwPosition.includes('top')) {
+        hardwareY = y + (insetInches * SCALE_Y);
+      } else if (hwPosition.includes('bottom')) {
+        hardwareY = y + height - (insetInches * SCALE_Y);
+      } else {
+        hardwareY = centerY; // middle
+      }
+
+      // Draw circle (diameter depends on type)
+      const diameter = type === 'pull-hole' ? 1 : 0.125; // in inches
+      const radius = (diameter / 2) * Math.min(SCALE_X, SCALE_Y); // Use average scale
+
+      elements.push(`<circle cx="${hardwareX}" cy="${hardwareY}" r="${radius}" class="door-hardware" />`);
+    }
   }
   
   // Rip cut lines and dimensions
@@ -165,8 +200,8 @@ export function generateSheetSvg(sheet: SheetLayout): string {
 /**
  * Generate SVGs for all sheet layouts
  */
-export function generateAllSheetSvgs(sheets: SheetLayout[]): string[] {
-  return sheets.map(sheet => generateSheetSvg(sheet));
+export function generateAllSheetSvgs(sheets: SheetLayout[], params: DesignParams): string[] {
+  return sheets.map(sheet => generateSheetSvg(sheet, params));
 }
 
 /**
@@ -217,59 +252,93 @@ export function generateTestSheetSvg(): string {
 /**
  * Generate simplified SVG for oversized parts (just the part rectangle, no text)
  */
-export function generateOversizedPartSvg(oversizedPart: OversizedPart): string {
+export function generateOversizedPartSvg(oversizedPart: OversizedPart, params: DesignParams): string {
   const part = oversizedPart.part;
-  
+
   // Calculate dimensions for the part rectangle with proportional scaling
   const maxDisplayWidth = 200; // Maximum display width
   const maxDisplayHeight = 200; // Reduced height since we're removing text
-  
+
   // Calculate scale to fit within display bounds while maintaining aspect ratio
   const scaleX = maxDisplayWidth / part.widthIn;
   const scaleY = maxDisplayHeight / part.lengthIn;
   const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
-  
+
   const partWidth = part.widthIn * scale;
   const partLength = part.lengthIn * scale;
-  
+
   // SVG dimensions based on content (minimal margins, no text space)
   const svgWidth = partWidth + 2 * 20; // Smaller margins
   const svgHeight = partLength + 2 * 20; // Smaller margins
-  
+
   const elements: string[] = [];
-  
+
   // SVG header
   elements.push(`<svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`);
-  
+
   // Add styles
   elements.push(`
     <defs>
       <style>
         .part-rect { fill: #f0f0f0; stroke: #000; stroke-width: 1; }
         .part-text { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; dominant-baseline: middle; }
+        .door-hardware { fill: none; stroke: #333; stroke-width: 1; }
       </style>
     </defs>
   `);
-  
+
   // Part outline
   const partX = 20;
   const partY = 20;
   elements.push(`<rect x="${partX}" y="${partY}" width="${partWidth}" height="${partLength}" class="part-rect" />`);
-  
+
   // Part label in center (just the part ID)
   const centerX = partX + partWidth / 2;
   const centerY = partY + partLength / 2;
   elements.push(`<text x="${centerX}" y="${centerY}" class="part-text">${part.id}</text>`);
-  
+
+  // Add door hardware circle if this is a door part
+  if (part.role === 'Door' && params.doorHardware) {
+    const { position: hwPosition, type, insetInches } = params.doorHardware;
+
+    // Calculate hardware position relative to part rectangle
+    let hardwareX = 0;
+    let hardwareY = 0;
+
+    // Horizontal position (based on part width)
+    if (hwPosition.includes('left')) {
+      hardwareX = partX + (insetInches * scale);
+    } else if (hwPosition.includes('right')) {
+      hardwareX = partX + partWidth - (insetInches * scale);
+    } else {
+      hardwareX = centerX; // center
+    }
+
+    // Vertical position (based on part length)
+    if (hwPosition.includes('top')) {
+      hardwareY = partY + (insetInches * scale);
+    } else if (hwPosition.includes('bottom')) {
+      hardwareY = partY + partLength - (insetInches * scale);
+    } else {
+      hardwareY = centerY; // middle
+    }
+
+    // Draw circle (diameter depends on type)
+    const diameter = type === 'pull-hole' ? 1 : 0.125; // in inches
+    const radius = (diameter / 2) * scale;
+
+    elements.push(`<circle cx="${hardwareX}" cy="${hardwareY}" r="${radius}" class="door-hardware" />`);
+  }
+
   // Close SVG
   elements.push('</svg>');
-  
+
   return elements.join('\n');
 }
 
 /**
  * Generate SVGs for all oversized parts
  */
-export function generateOversizedPartSvgs(oversizedParts: OversizedPart[]): string[] {
-  return oversizedParts.map(part => generateOversizedPartSvg(part));
+export function generateOversizedPartSvgs(oversizedParts: OversizedPart[], params: DesignParams): string[] {
+  return oversizedParts.map(part => generateOversizedPartSvg(part, params));
 }

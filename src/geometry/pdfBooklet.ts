@@ -464,8 +464,8 @@ either side will add 1/8" to either side)`
 
   // ===== PAGE 4: Cut List =====
   const layoutResult = generateSheetLayouts(parts);
-  const sheetSvgs = generateAllSheetSvgs(layoutResult.sheets);
-  const oversizedSvgs = generateOversizedPartSvgs(layoutResult.oversizedParts);
+  const sheetSvgs = generateAllSheetSvgs(layoutResult.sheets, params);
+  const oversizedSvgs = generateOversizedPartSvgs(layoutResult.oversizedParts, params);
   
   // Calculate total pages needed (regular sheets + oversized parts sections)
   const sheetsPerPage = 3;

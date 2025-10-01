@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions } from '../geometry/types';
+import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions, DoorHardware, DoorHardwarePosition, DoorHardwareType } from '../geometry/types';
 import { DEFAULT_DESIGN, RECOMMENDED_MATERIALS } from '../geometry/constants';
 import type { DesignAnalysis } from '../geometry/estimate';
 import { analyzeDesign } from '../geometry/estimate';
@@ -30,7 +30,10 @@ interface DesignStore {
   setDoorMode: (type: 'inset' | 'overlay') => void;
   setDoorReveal: (inches: number) => void;
   setDoorOverlay: (inches: number) => void;
-  
+  setDoorHardwarePosition: (position: DoorHardwarePosition) => void;
+  setDoorHardwareType: (type: DoorHardwareType) => void;
+  setDoorHardwareInset: (inches: number) => void;
+
   // Material thickness actions
   setFrameThickness: (thickness: ThicknessMap) => void;
   setBackThickness: (thickness: ThicknessMap) => void;
@@ -117,6 +120,13 @@ export const useDesignStore = create<DesignStore>()(
             door: RECOMMENDED_MATERIALS.door,
           };
         }
+        if (hasDoors && !get().params.doorHardware) {
+          updates.doorHardware = {
+            position: 'top-center',
+            type: 'pull-hole',
+            insetInches: 1,
+          };
+        }
         get().updateParams(updates);
       },
       
@@ -137,7 +147,40 @@ export const useDesignStore = create<DesignStore>()(
           doorMode: { ...get().params.doorMode, overlayInches: inches },
         });
       },
-      
+
+      setDoorHardwarePosition: (position) => {
+        const currentHardware = get().params.doorHardware || {
+          position: 'top-center',
+          type: 'pull-hole',
+          insetInches: 1,
+        };
+        get().updateParams({
+          doorHardware: { ...currentHardware, position },
+        });
+      },
+
+      setDoorHardwareType: (type) => {
+        const currentHardware = get().params.doorHardware || {
+          position: 'top-center',
+          type: 'pull-hole',
+          insetInches: 1,
+        };
+        get().updateParams({
+          doorHardware: { ...currentHardware, type },
+        });
+      },
+
+      setDoorHardwareInset: (inches) => {
+        const currentHardware = get().params.doorHardware || {
+          position: 'top-center',
+          type: 'pull-hole',
+          insetInches: 1,
+        };
+        get().updateParams({
+          doorHardware: { ...currentHardware, insetInches: inches },
+        });
+      },
+
       // Material thickness actions
       setFrameThickness: (thickness) => {
         get().updateParams({

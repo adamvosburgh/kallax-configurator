@@ -17,6 +17,24 @@ export interface DoorMode {
   overlayInches?: number;
 }
 
+export type DoorHardwarePosition =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'middle-left'
+  | 'middle-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
+
+export type DoorHardwareType = 'drill-guide' | 'pull-hole';
+
+export interface DoorHardware {
+  position: DoorHardwarePosition;
+  type: DoorHardwareType;
+  insetInches: number;
+}
+
 export interface MergeSpec {
   r0: number;
   c0: number;
@@ -32,6 +50,7 @@ export interface DesignParams {
   hasBack: boolean;
   hasDoors: boolean;
   doorMode: DoorMode;
+  doorHardware?: DoorHardware;
   materials: MaterialOptions;
   merges: MergeSpec[];
 }

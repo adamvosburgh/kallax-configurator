@@ -10,11 +10,6 @@ export function ControlsPanel() {
     analysis,
     setInteriorClearance,
     setDepth,
-    setHasBack,
-    setHasDoors,
-    setDoorMode,
-    setDoorReveal,
-    setDoorOverlay,
     setFrameThickness,
     setBackThickness,
     setDoorThickness,
@@ -164,84 +159,6 @@ export function ControlsPanel() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="divider" />
-
-      {/* Back and Doors */}
-      <div className="space-y-3">
-        <h3 className="section-title">Options</h3>
-
-        <div className="space-y-2">
-          <label className="field-row" style={{ cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={params.hasBack}
-              onChange={(e) => setHasBack(e.target.checked)}
-              className="checkbox-field"
-            />
-            <span className="text-sm">Add back panel</span>
-          </label>
-
-          <label className="field-row" style={{ cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={params.hasDoors}
-              onChange={(e) => setHasDoors(e.target.checked)}
-              className="checkbox-field"
-            />
-            <span className="text-sm">Add doors</span>
-          </label>
-        </div>
-
-        {/* Door Options */}
-        {params.hasDoors && (
-          <div className="pl-4 space-y-3 border-l-2 border-gray-200">
-            <div className="field-group">
-              <label className="form-label">
-                Door Style
-              </label>
-              <select
-                value={params.doorMode.type}
-                onChange={(e) => setDoorMode(e.target.value as 'inset' | 'overlay')}
-                className="select-field"
-              >
-                <option value="inset">Inset</option>
-                <option value="overlay">Overlay</option>
-              </select>
-            </div>
-
-            {params.doorMode.type === 'inset' && (
-              <div className="field-group">
-                <label className="form-label">
-                  Reveal (inches)
-                </label>
-                <input
-                  type="number"
-                  step="0.0625"
-                  value={params.doorMode.revealInches || 0.0625}
-                  onChange={(e) => setDoorReveal(parseFloat(e.target.value) || 0.0625)}
-                  className="input-field"
-                />
-              </div>
-            )}
-
-            {params.doorMode.type === 'overlay' && (
-              <div className="field-group">
-                <label className="form-label">
-                  Overlay (inches)
-                </label>
-                <input
-                  type="number"
-                  step="0.125"
-                  value={params.doorMode.overlayInches || 0.25}
-                  onChange={(e) => setDoorOverlay(parseFloat(e.target.value) || 0.25)}
-                  className="input-field"
-                />
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="divider" />
