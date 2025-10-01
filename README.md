@@ -1,17 +1,17 @@
 # Kallax Configurator
 
-An open-source web application for designing IKEA Kallax-style modular shelving units with 3D preview and IKEA-style assembly instructions.
+A web-based tool for designing custom plywood modular shelving units. Generate cut lists, 3D previews, and assembly instructions for IKEA Kallax-style furniture.
 
 ## Features
 
-- **Visual Grid Editor**: Design shelving layouts up to 10×10 with drag-to-merge functionality
-- **Real-time 3D Preview**: See your design in 3D with hover tooltips for part details
-- **Floating Window Interface**: Modular UI with draggable/resizable panels inspired by Hylics aesthetic
-- **Material Configuration**: Choose plywood thicknesses with actual vs nominal options
-- **Export Options**: Generate cut lists (CSV), design files (JSON), and assembly instructions (PDF)
-- **URL Sharing**: Share designs via compressed URLs
-- **Responsive Design**: Works on desktop and tablet devices
-- **Optional 3D Merge Tools**: Hover-based merge targets in 3D view (disabled by default)
+- **Visual Grid Editor**: Design up to 10×10 layouts with drag-to-merge cells for larger openings
+- **Real-time 3D Preview**: Interactive 3D view with customizable color schemes and transparency
+- **Docked Window Interface**: Organized panels for grid layout, options, controls, export, and part legend
+- **Material Configuration**: Select plywood thicknesses (1/4", 1/2", 3/4") with nominal-to-actual conversion
+- **Door Hardware**: Configure drill guide or pull hole positions with adjustable inset distances
+- **Smart Cut Lists**: Optimized sheet layouts for 4'×8' plywood with rip cut suggestions
+- **PDF Assembly Instructions**: Generate IKEA-style booklets with axonometric views and cut diagrams
+- **Export Options**: CSV cut lists, JSON design files, and shareable compressed URLs
 
 ## Quick Start
 
@@ -22,67 +22,65 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## Construction Assumptions
-
-This configurator is based on IKEA Kallax design principles with the following specifications:
+## Design Specifications
 
 ### Default Dimensions
-- **Interior clearance**: 13.25" × 13.25" (square modules)  
+- **Interior clearance**: 13.25" × 13.25" (square modules)
 - **Shelf depth**: 15.375" (interior)
 - **Frame thickness**: 3/4" nominal (23/32" actual plywood)
 
-### Construction Method (v1)
-- **Butt joints only** (no dados or rabbets)
-- **Top/bottom pieces**: Run full width, unbroken
-- **Vertical pieces**: Run full height, stop inside top/bottom caps
-- **Interior shelves**: Segmented between verticals (not continuous)
+### Assembly Methods
+The app provides dimensions for **butt joint** construction. If using dados or rabbets, adjust part dimensions accordingly:
+
+**Butt Joints:**
+- Use measurements as-is
+- Hidden screws, pocket screws, or glued dowels recommended
+
+**Dados** (requires manual adjustment):
+- 1/8" dados for shelves into vertical dividers
+- 1/4" dados for top/bottom/sides into end pieces
 
 ### Material Options
-- **Frame**: 1/2" or 3/4" plywood (3/4" recommended)
-- **Back**: 1/4", 1/2", or 3/4" plywood (1/4" recommended, surface-mounted)
-- **Doors**: 1/4", 1/2", or 3/4" plywood (3/4" recommended)
+- **Frame**: 3/4" plywood (1/2" also supported)
+- **Back**: 1/4" plywood, surface-mounted (1/2", 3/4" also supported)
+- **Doors**: 3/4" plywood (1/4", 1/2" also supported)
+  - Inset style: 1/16" reveal (default)
+  - Overlay style: 1/4" overlay
 
-### Door Types
-- **Inset**: Fits inside opening with 1/16" reveal (default)
-- **Overlay**: Covers opening with 1/2" overlay
-
-### Exterior Dimensions Formula
-For N modules in a direction:
-```
-exterior = (N × interior_clearance) + ((N + 1) × frame_thickness_actual)
-```
-
-**Example**: 2×2 shelf with 3/4" frame:
-- Width: 2×13.25 + 3×(23/32) = 28 21/32"
-- Height: 2×13.25 + 3×(23/32) = 28 21/32"  
-- Depth: 15 3/8" (no back) or 15 3/8" + back thickness
+### Door Hardware
+- **Drill guide**: 1/8" diameter marking for pilot holes
+- **Pull hole**: 1" diameter for handle installation
+- Configurable position (8 locations) and inset distance (default 1")
 
 ## Project Structure
 
 ```
 src/
-├── components/         # React components
-│   ├── Canvas3D.tsx   # 3D preview with Three.js
-│   ├── GridEditor.tsx # Grid design interface
-│   ├── ControlsPanel.tsx # Material and option controls
-│   ├── ExportPanel.tsx # Export functionality
-│   ├── FloatingWindow.tsx # Draggable/resizable window system
-│   ├── PartHoverCard.tsx # 3D part detail tooltip
-│   └── MergeTargetOverlay.tsx # Optional 3D merge functionality
-├── geometry/          # Core calculation logic
-│   ├── constants.ts   # Default values and materials
-│   ├── types.ts       # TypeScript interfaces
-│   ├── layout.ts      # Layout calculation (verticals/horizontals)
-│   ├── parts.ts       # Parts generation from layout
-│   ├── format.ts      # Inch-to-fraction utilities
-│   ├── estimate.ts    # Material estimation and warnings
-│   ├── svgDiagrams.ts # Assembly step diagrams
-│   └── pdfBooklet.ts  # PDF instruction generation
-├── state/             # State management
-│   ├── useDesignStore.ts # Main design state (Zustand)
-│   └── useFloatingWindowStore.ts # UI window management
+├── components/
+│   ├── Canvas3D.tsx       # 3D preview with Three.js
+│   ├── GridEditor.tsx     # Grid design interface
+│   ├── ControlsPanel.tsx  # Dimensions and materials
+│   ├── OptionsPanel.tsx   # Back panel, doors, hardware
+│   ├── KeyPanel.tsx       # Color schemes, transparency, legend
+│   ├── ExportPanel.tsx    # Export functionality
+│   ├── FloatingWindow.tsx # Dockable/draggable window system
+│   └── PartHoverCard.tsx  # 3D part hover tooltips
+├── geometry/
+│   ├── constants.ts       # Defaults and material specs
+│   ├── types.ts           # TypeScript interfaces
+│   ├── layout.ts          # Grid layout calculation
+│   ├── parts.ts           # Part generation from layout
+│   ├── measurements.ts    # Dimension calculations
+│   ├── format.ts          # Fraction formatting
+│   ├── estimate.ts        # Material estimation
+│   ├── pdfBooklet.ts      # PDF assembly instructions
+│   ├── cutListSvg.ts      # Sheet layout diagrams
+│   └── ripGenerator.ts    # Cut optimization for 4'×8' sheets
+├── state/
+│   ├── useDesignStore.ts  # Design parameters (Zustand)
+│   └── useFloatingWindowStore.ts # Window positions/state
 └── pages/
-    └── App.tsx        # Main application layout with floating windows
+    └── App.tsx            # Main layout with docked panels
 ```
 
 ## Tech Stack
@@ -98,42 +96,35 @@ src/
 ## Usage
 
 ### Interface
-The application uses a floating window interface with draggable, resizable panels:
-- **Grid Layout**: Design your shelving grid with drag-to-merge functionality
-- **Controls**: Material settings, back panels, doors, and dimensions
-- **Export**: Generate cut lists, design files, and assembly instructions
-- **Parts Key**: 3D color legend for part identification
+The app features a docked panel layout (all panels can be undocked, moved, and collapsed):
 
-### Basic Design
-1. Set grid size (rows × columns)
-2. Drag to merge cells for larger openings in the 2D grid editor
-3. Enable back panel and/or doors as needed
-4. Adjust material thicknesses if required
-5. View real-time 3D preview with hover details
+**Left Sidebar:**
+- **Grid Layout**: Design grid with drag-to-merge cells
+- **Options**: Back panel, doors, door hardware configuration
+- **Key**: 3D color scheme selector, transparency control, and part legend
 
-### Material Overrides
-The app uses standard plywood thicknesses by default:
-- 1/4" → 7/32" (0.21875")
-- 1/2" → 15/32" (0.46875")  
-- 3/4" → 23/32" (0.71875")
+**Right Sidebar:**
+- **Controls**: Dimensions and material thickness settings
+- **Export**: Generate CSV, JSON, PDF, or share links
 
-Override these values in the controls panel for your specific material.
+### Workflow
+1. Set grid dimensions (rows × columns) in Grid Layout
+2. Drag to merge cells for larger openings
+3. Configure options: back panel, doors (inset/overlay), hardware position
+4. Adjust materials and dimensions in Controls
+5. Customize 3D view with color schemes (greys/browns/blues/random) and transparency
+6. Export cut lists, assembly instructions, or share designs via URL
 
-### Exporting
-- **Cut List (CSV)**: Formatted for shop use with precise dimensions
-- **Design (JSON)**: Complete design data for backup/sharing
-- **Instructions (PDF)**: IKEA-style assembly booklet
-- **Share Link**: URL with compressed design data
-
-### 3D Merge Functionality (Experimental)
-An optional 3D merge system allows creating cell merges directly in the 3D view:
-- **Disabled by default** due to performance considerations
-- **Toggle via code**: Set `ENABLE_3D_MERGE_TARGETS = true` in `Canvas3D.tsx`
-- **Hover-based targets**: Plus icons appear between adjacent cells
-- **Animation system**: Icons scale and change opacity on hover
-- **Click to merge**: Works with existing merge logic from 2D grid
-
-*Note: Use the 2D grid editor for primary merge functionality - it's more reliable and performant.*
+### Export Formats
+- **Cut List (CSV)**: Part dimensions with quantities for shop use
+- **Assembly Instructions (PDF)**: Multi-page booklet with:
+  - 3D axonometric view
+  - Configuration summary
+  - Parts list
+  - Assembly method suggestions
+  - Sheet layout diagrams (4'×8' plywood with rip cuts)
+- **Design File (JSON)**: Complete design for backup/sharing
+- **Share Link**: Compressed URL for easy sharing
 
 ## Development
 
@@ -157,20 +148,18 @@ Tests cover layout calculation, parts generation, and dimension formatting.
 
 ## Known Limitations
 
-- **v1 uses butt joints only** - dados/rabbets not implemented
-- **No structural analysis** - relies on user judgment for large spans
-- **Simplified 3D positioning** - parts shown relative to overall dimensions
-- **PDF diagrams are basic** - more detailed exploded views planned for v2
-- **3D merge functionality is experimental** - disabled by default due to performance considerations
+- Dimensions calculated for **butt joints only** (dados/rabbets require manual adjustment)
+- No structural analysis (relies on user judgment for large/unsupported spans)
+- Cut list optimization is basic (uses simple bin packing with 24" max rip width)
+- PDF diagrams show layout but not detailed assembly steps
 
 ## Future Enhancements
 
-- Advanced joinery options (dados, rabbets)
-- Hardware specifications (screws, hinges, etc.)
-- Cut optimization for sheet goods
-- Detailed exploded view diagrams
-- Material cost estimation
-- CNC/laser cut file export
+- More sophisticated cut optimization algorithms
+- Detailed exploded view assembly diagrams
+- Hardware specifications (screws, hinges, quantities)
+- Material cost estimation with regional pricing
+- CNC/laser cutter file export (DXF, SVG)
 
 ## Contributing
 
