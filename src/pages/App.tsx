@@ -4,14 +4,13 @@ import { GridEditor } from '../components/GridEditor';
 import { ControlsPanel } from '../components/ControlsPanel';
 import { OptionsPanel } from '../components/OptionsPanel';
 import { ExportPanel } from '../components/ExportPanel';
+import { KeyPanel } from '../components/KeyPanel';
 import { FloatingWindow } from '../components/FloatingWindow';
 import { useDesignStore } from '../state/useDesignStore';
-import { useFloatingWindowStore } from '../state/useFloatingWindowStore';
 
 export function App() {
   const store = useDesignStore();
   const { importDesign, _hasHydrated, params } = store;
-  const { showWindow } = useFloatingWindowStore();
 
   // Handle first-time users and ensure hydration is complete
   useEffect(() => {
@@ -125,35 +124,14 @@ export function App() {
 
         <FloatingWindow
           id="key"
-          title="Parts Key"
+          title="Key"
           defaultPosition={{ x: 1070, y: 120 }}
           defaultSize={{ width: 280, height: 450 }}
           collapsedPreview="3D Parts Legend"
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 2 }}
         >
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="color-swatch swatch-top-bottom"></div>
-              <span className="text-xs text-mono">Top/Bottom</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="color-swatch swatch-sides"></div>
-              <span className="text-xs text-mono">Sides</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="color-swatch swatch-sides"></div>
-              <span className="text-xs text-mono">Vertical Dividers</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="color-swatch swatch-doors"></div>
-              <span className="text-xs text-mono">Doors</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="color-swatch swatch-back"></div>
-              <span className="text-xs text-mono">Back Panels</span>
-            </div>
-          </div>
+          <KeyPanel />
         </FloatingWindow>
       </div>
 

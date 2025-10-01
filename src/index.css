@@ -306,7 +306,7 @@ body {
    ===================== */
 .form-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
   color: #4b5563;
   margin-top: 0.5rem;
@@ -330,15 +330,16 @@ body {
   font-size: 0.6875rem;
   padding-top: 5px;
   padding-bottom: 5px;
+  padding-left: 2px;
 }
 
 .text-sm {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   padding: 2px;
 }
 
 .text-base {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   padding: 2px;
 }
 
@@ -411,33 +412,6 @@ body {
   color: #111827;
   font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-}
-
-/* =====================
-   COLOR SWATCHES
-   ===================== */
-.color-swatch {
-  width: 0.875rem;
-  height: 0.875rem;
-  border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
-  flex-shrink: 0;
-}
-
-.swatch-top-bottom {
-  background-color: #a0522d !important;
-}
-
-.swatch-sides {
-  background-color: #8b4513 !important;
-}
-
-.swatch-doors {
-  background-color: #cd853f !important;
-}
-
-.swatch-back {
-  background-color: #654321 !important;
 }
 
 /* =====================

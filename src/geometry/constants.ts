@@ -39,6 +39,8 @@ export const DEFAULT_DESIGN: DesignParams = {
     door: RECOMMENDED_MATERIALS.door,
   },
   merges: [],
+  colorScheme: 'blues',
+  opacity: 0.9,
 };
 
 // Grid constraints

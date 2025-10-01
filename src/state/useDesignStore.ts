@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions, DoorHardware, DoorHardwarePosition, DoorHardwareType } from '../geometry/types';
+import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions, DoorHardwarePosition, DoorHardwareType } from '../geometry/types';
 import { DEFAULT_DESIGN, RECOMMENDED_MATERIALS } from '../geometry/constants';
 import type { DesignAnalysis } from '../geometry/estimate';
 import { analyzeDesign } from '../geometry/estimate';
@@ -49,7 +49,11 @@ interface DesignStore {
   // UI actions
   setSelectedPartId: (id: string | null) => void;
   setHoveredPartId: (id: string | null) => void;
-  
+
+  // Visual actions
+  setColorScheme: (scheme: 'greys' | 'browns' | 'blues' | 'random') => void;
+  setOpacity: (opacity: number) => void;
+
   // Utility actions
   reset: () => void;
   exportDesign: () => string;
@@ -262,7 +266,15 @@ export const useDesignStore = create<DesignStore>()(
       // UI actions
       setSelectedPartId: (id) => set({ selectedPartId: id }),
       setHoveredPartId: (id) => set({ hoveredPartId: id }),
-      
+
+      // Visual actions
+      setColorScheme: (scheme) => {
+        get().updateParams({ colorScheme: scheme });
+      },
+      setOpacity: (opacity) => {
+        get().updateParams({ opacity: Math.max(0, Math.min(1, opacity)) });
+      },
+
       // Utility actions
       reset: () => {
         const derived = computeDerivedData(DEFAULT_DESIGN);

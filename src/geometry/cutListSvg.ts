@@ -245,8 +245,11 @@ export function generateTestSheetSvg(): string {
       },
     ],
   };
-  
-  return generateSheetSvg(testSheet);
+
+  // Use minimal test params (doors won't have hardware in test)
+  const testParams: DesignParams = {} as any;
+
+  return generateSheetSvg(testSheet, testParams);
 }
 
 /**

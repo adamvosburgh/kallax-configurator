@@ -42,6 +42,8 @@ export interface MergeSpec {
   c1: number;
 }
 
+export type ColorScheme = 'greys' | 'browns' | 'blues' | 'random';
+
 export interface DesignParams {
   rows: number;
   cols: number;
@@ -53,6 +55,8 @@ export interface DesignParams {
   doorHardware?: DoorHardware;
   materials: MaterialOptions;
   merges: MergeSpec[];
+  colorScheme: ColorScheme;
+  opacity: number;
 }
 
 export type PartRole =

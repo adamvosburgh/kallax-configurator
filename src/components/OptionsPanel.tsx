@@ -28,8 +28,6 @@ export function OptionsPanel() {
     <div className="space-y-4">
       {/* Back and Doors */}
       <div className="space-y-3">
-        <h3 className="section-title">Options</h3>
-
         <div className="space-y-2">
           <label className="field-row" style={{ cursor: 'pointer' }}>
             <input
@@ -144,7 +142,9 @@ export function OptionsPanel() {
                   border: '2px solid #d1d5db',
                   borderRadius: '0.375rem',
                   padding: '0.5rem',
-                  backgroundColor: '#fafafa'
+                  backgroundColor: '#fafafa',
+                  maxHeight: '200px',
+                  maxWidth: '200px',
                 }}
               >
                 {/* Row 1 - Top */}

@@ -47,27 +47,55 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
     return [0, 0, 0];
   };
 
-  // Color based on part role - brown wood shades
+  // Color based on part role and color scheme
   const getColor = () => {
     if (isSelected) return '#3b82f6'; // blue for selection
     if (isHovered) return '#10b981'; // green for hover
 
-    switch (part.role) {
-      case 'Top':
-      case 'Bottom':
-        return '#a0522d'; // sienna
-      case 'Side':
-      case 'VerticalDivider':
-        return '#8b4513'; // saddle brown
-      case 'BayShelf':
-        return '#d2691e'; // chocolate
-      case 'Back':
-        return '#654321'; // dark brown
-      case 'Door':
-        return '#cd853f'; // peru
-      default:
-        return '#deb887'; // burlywood
+    const { colorScheme } = params;
+
+    // Random color scheme - generate a consistent color per part ROLE
+    if (colorScheme === 'random') {
+      const hash = part.role.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const hue = (hash * 137.508) % 360; // Golden angle approximation for better distribution
+      return `hsl(${hue}, 65%, 55%)`;
     }
+
+    // Color schemes by role
+    const colorSchemes: Record<'greys' | 'browns' | 'blues', Record<string, string>> = {
+      greys: {
+        'Top': '#6b7280',
+        'Bottom': '#6b7280',
+        'Side': '#4b5563',
+        'VerticalDivider': '#4b5563',
+        'BayShelf': '#9ca3af',
+        'Back': '#374151',
+        'Door': '#d1d5db',
+      },
+      browns: {
+        'Top': '#a0522d',
+        'Bottom': '#a0522d',
+        'Side': '#8b4513',
+        'VerticalDivider': '#8b4513',
+        'BayShelf': '#d2691e',
+        'Back': '#654321',
+        'Door': '#cd853f',
+      },
+      blues: {
+        'Top': '#60a5fa',
+        'Bottom': '#60a5fa',
+        'Side': '#3b82f6',
+        'VerticalDivider': '#3b82f6',
+        'BayShelf': '#93c5fd',
+        'Back': '#1e40af',
+        'Door': '#bfdbfe',
+      },
+    };
+
+    if (colorScheme === 'greys' || colorScheme === 'browns' || colorScheme === 'blues') {
+      return colorSchemes[colorScheme]?.[part.role] || '#deb887';
+    }
+    return '#deb887';
   };
 
   // Calculate hardware position for doors
@@ -131,7 +159,7 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
         <meshStandardMaterial
           color={getColor()}
           transparent
-          opacity={part.role === 'Door' ? 0.7 : 0.9}
+          opacity={params.opacity}
         />
       </mesh>
 
@@ -280,13 +308,13 @@ export function Canvas3D() {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const mousePos = {
+      const newMousePos = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
       };
       // Store mouse position globally for the Scene component to use
-      (window as any).canvasMousePos = mousePos;
-      setMousePos(mousePos);
+      (window as any).canvasMousePos = newMousePos;
+      setMousePos(newMousePos);
     }
   }, []);
 

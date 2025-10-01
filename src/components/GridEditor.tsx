@@ -26,7 +26,7 @@ export function GridEditor() {
   };
   
   // Check if a cell is the top-left of a merge (for rendering)
-  const isMergeOrigin = (row: number, col: number, merge: MergeSpec): boolean => {
+  const _isMergeOrigin = (row: number, col: number, merge: MergeSpec): boolean => {
     return row === merge.r0 && col === merge.c0;
   };
   

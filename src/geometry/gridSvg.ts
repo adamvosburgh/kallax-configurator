@@ -117,6 +117,8 @@ export function generateTestGridSvg(): string {
     materials: {
       frame: { nominal: '3/4"', actualInches: 0.75 },
     },
+    colorScheme: 'blues',
+    opacity: 1.0,
   };
   
   return generateGridSvg(testParams);
