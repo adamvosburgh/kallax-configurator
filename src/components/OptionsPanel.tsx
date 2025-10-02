@@ -52,7 +52,7 @@ export function OptionsPanel() {
 
         {/* Door Options */}
         {params.hasDoors && (
-          <div className="pl-4 space-y-3 border-l-2 border-gray-200">
+          <div className="pl-4 space-y-3 border-gray-200">
             <div className="field-group">
               <label className="form-label">
                 Door Style
