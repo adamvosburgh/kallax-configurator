@@ -106,20 +106,9 @@ export function App() {
           collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 0 }}
+          
         >
           <GridEditor />
-        </FloatingWindow>
-
-        <FloatingWindow
-          id="options"
-          title="Options"
-          defaultPosition={{ x: 570, y: 300 }}
-          defaultSize={{ width: 420, height: 600 }}
-          collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
-          defaultDocked={true}
-          dockedPosition={{ side: 'left', order: 1 }}
-        >
-          <OptionsPanel />
         </FloatingWindow>
 
         <FloatingWindow
@@ -132,6 +121,19 @@ export function App() {
           dockedPosition={{ side: 'left', order: 2 }}
         >
           <KeyPanel />
+        </FloatingWindow>
+        
+        <FloatingWindow
+          id="options"
+          title="Options"
+          defaultPosition={{ x: 570, y: 300 }}
+          defaultSize={{ width: 420, height: 600 }}
+          collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 1 }}
+          font-size='0.75rem'
+        >
+          <OptionsPanel />
         </FloatingWindow>
       </div>
 

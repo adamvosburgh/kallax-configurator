@@ -61,6 +61,7 @@ export function KeyPanel() {
               width: '1.5rem',
               height: '1.5rem',
               backgroundColor: '#6b7280',
+              borderRadius: '0.5rem',
               borderColor: params.colorScheme === 'greys' ? '#3b82f6' : '#d1d5db',
             }}
             title="Greys"
@@ -72,6 +73,7 @@ export function KeyPanel() {
               width: '1.5rem',
               height: '1.5rem',
               backgroundColor: '#8b4513',
+              borderRadius: '0.5rem',
               borderColor: params.colorScheme === 'browns' ? '#3b82f6' : '#d1d5db',
             }}
             title="Browns"
@@ -83,6 +85,7 @@ export function KeyPanel() {
               width: '1.5rem',
               height: '1.5rem',
               backgroundColor: '#3b82f6',
+              borderRadius: '0.5rem',
               borderColor: params.colorScheme === 'blues' ? '#3b82f6' : '#d1d5db',
             }}
             title="Blues"
@@ -94,6 +97,7 @@ export function KeyPanel() {
               width: '1.5rem',
               height: '1.5rem',
               background: 'linear-gradient(135deg, #ef4444 0%, #eab308 25%, #22c55e 50%, #3b82f6 75%, #a855f7 100%)',
+              borderRadius: '0.5rem',
               borderColor: params.colorScheme === 'random' ? '#3b82f6' : '#d1d5db',
             }}
             title="Random"
@@ -123,58 +127,68 @@ export function KeyPanel() {
       <div className="divider" />
 
       {/* Part Legend */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+        <div className="flex items-center gap-2">
           <div
-            className="rounded border border-gray-300 flex-shrink-0"
+            className="rounded border flex-shrink-0"
             style={{
               width: '0.875rem',
               height: '0.875rem',
-              backgroundColor: getColorForRole('Top', params.colorScheme)
+              backgroundColor: getColorForRole('Top', params.colorScheme),
+              borderRadius: '0.25rem',
+              borderColor: '#d1d5db',
             }}
           ></div>
           <span className="text-xs text-mono">Top/Bottom</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className="rounded border border-gray-300 flex-shrink-0"
+            className="rounded border flex-shrink-0"
             style={{
               width: '0.875rem',
               height: '0.875rem',
-              backgroundColor: getColorForRole('Side', params.colorScheme)
+              backgroundColor: getColorForRole('Side', params.colorScheme),
+              borderRadius: '0.25rem',
+              borderColor: '#d1d5db',
             }}
           ></div>
           <span className="text-xs text-mono">Sides</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className="rounded border border-gray-300 flex-shrink-0"
+            className="rounded border flex-shrink-0"
             style={{
               width: '0.875rem',
               height: '0.875rem',
-              backgroundColor: getColorForRole('VerticalDivider', params.colorScheme)
+              backgroundColor: getColorForRole('VerticalDivider', params.colorScheme),
+              borderRadius: '0.25rem',
+              borderColor: '#d1d5db',
             }}
           ></div>
           <span className="text-xs text-mono">Vertical Dividers</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className="rounded border border-gray-300 flex-shrink-0"
+            className="rounded border flex-shrink-0"
             style={{
               width: '0.875rem',
               height: '0.875rem',
-              backgroundColor: getColorForRole('Door', params.colorScheme)
+              backgroundColor: getColorForRole('Door', params.colorScheme),
+              borderRadius: '0.25rem',
+              borderColor: '#d1d5db',
             }}
           ></div>
           <span className="text-xs text-mono">Doors</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className="rounded border border-gray-300 flex-shrink-0"
+            className="rounded border flex-shrink-0"
             style={{
               width: '0.875rem',
               height: '0.875rem',
-              backgroundColor: getColorForRole('Back', params.colorScheme)
+              backgroundColor: getColorForRole('Back', params.colorScheme),
+              borderRadius: '0.25rem',
+              borderColor: '#d1d5db',
             }}
           ></div>
           <span className="text-xs text-mono">Back Panels</span>

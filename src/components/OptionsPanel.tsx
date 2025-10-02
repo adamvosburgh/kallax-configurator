@@ -133,20 +133,21 @@ export function OptionsPanel() {
 
             <div className="field-group">
               <label className="form-label">Hardware Position</label>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '0.25rem',
-                  aspectRatio: '3 / 4',
-                  border: '2px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  padding: '0.5rem',
-                  backgroundColor: '#fafafa',
-                  maxHeight: '200px',
-                  maxWidth: '200px',
-                }}
-              >
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gridTemplateRows: 'repeat(3, 1fr)',
+                    gap: '0.25rem',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    padding: '0.5rem',
+                    backgroundColor: '#fafafa',
+                    width: '150px',
+                    height: '150px',
+                  }}
+                >
                 {/* Row 1 - Top */}
                 <button
                   onClick={() => handlePositionClick('top-left')}
@@ -241,6 +242,7 @@ export function OptionsPanel() {
                 >
                   <div className="hardware-dot"></div>
                 </button>
+              </div>
               </div>
             </div>
           </div>

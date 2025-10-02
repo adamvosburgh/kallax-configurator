@@ -16,28 +16,31 @@ export interface MaterialEstimate {
  */
 function checkSpanWarnings(params: DesignParams): Warning[] {
   const warnings: Warning[] = [];
-  
-  for (const merge of params.merges) {
+
+  for (let i = 0; i < params.merges.length; i++) {
+    const merge = params.merges[i];
     const widthSpan = merge.c1 - merge.c0 + 1;
     const heightSpan = merge.r1 - merge.r0 + 1;
-    
+
     if (widthSpan >= 3) {
       warnings.push({
         type: 'span_too_large',
         message: `Horizontal span of ${widthSpan} modules may require additional support`,
         severity: 'warning',
+        mergeIndex: i,
       });
     }
-    
+
     if (heightSpan >= 3) {
       warnings.push({
         type: 'span_too_large',
         message: `Vertical span of ${heightSpan} modules may require additional support`,
         severity: 'warning',
+        mergeIndex: i,
       });
     }
   }
-  
+
   return warnings;
 }
 

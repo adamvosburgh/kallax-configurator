@@ -114,4 +114,5 @@ export interface Warning {
   type: 'span_too_large';
   message: string;
   severity: 'info' | 'warning' | 'error';
+  mergeIndex?: number; // Optional: links warning to specific merge
 }

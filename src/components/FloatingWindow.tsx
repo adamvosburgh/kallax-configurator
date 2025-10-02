@@ -120,7 +120,7 @@ export function FloatingWindow({
         }}
         onClick={handleToggleCollapse}
       >
-        <h2 className="text-xs font-medium text-mono">{title}</h2>
+        <h2 className="text-sm font-medium text-mono">{title}</h2>
       </div>
     );
   }
@@ -144,7 +144,7 @@ export function FloatingWindow({
         ref={headerRef}
         className="floating-window-header"
       >
-        <h3 className="text-xs font-medium text-mono">{title}</h3>
+        <h3 className="text-sm font-medium text-mono">{title}</h3>
         <div className="floating-window-header-actions">
           {!windowState.isDocked && (
             <button
