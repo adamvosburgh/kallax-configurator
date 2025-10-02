@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Canvas3D } from '../components/Canvas3D';
 import { GridEditor } from '../components/GridEditor';
 import { ControlsPanel } from '../components/ControlsPanel';
@@ -6,11 +6,13 @@ import { OptionsPanel } from '../components/OptionsPanel';
 import { ExportPanel } from '../components/ExportPanel';
 import { KeyPanel } from '../components/KeyPanel';
 import { FloatingWindow } from '../components/FloatingWindow';
+import { AboutModal } from '../components/AboutModal';
 import { useDesignStore } from '../state/useDesignStore';
 
 export function App() {
   const store = useDesignStore();
   const { importDesign, _hasHydrated, params } = store;
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   // Handle first-time users and ensure hydration is complete
   useEffect(() => {
@@ -55,28 +57,35 @@ export function App() {
           </div>
           <div className="flex items-center gap-3">
             <a
+              onClick={(e) => {
+                e.preventDefault();
+                setIsAboutOpen(true);
+              }}
+              href="#about"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+              style={{ cursor: 'pointer' }}
+            >
+              About
+            </a>
+            <span className="text-gray-400">•</span>
+            <a
               href="https://github.com/adamvosburgh/kallax-configurator"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors flex items-center gap-1"
             >
               GitHub
+              <span style={{ fontSize: '10px' }}>↗</span>
             </a>
             <span className="text-gray-400">•</span>
             <a
-              href="mailto:your.email@example.com"
-              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
-            >
-              Email
-            </a>
-            <span className="text-gray-400">•</span>
-            <a
-              href="https://yourwebsite.com"
+              href="https://adamvosburgh.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-mono text-gray-600 hover:text-black transition-colors"
+              className="text-xs font-mono text-gray-600 hover:text-black transition-colors flex items-center gap-1"
             >
               Website
+              <span style={{ fontSize: '10px' }}>↗</span>
             </a>
           </div>
         </div>
@@ -163,6 +172,9 @@ export function App() {
           <ExportPanel />
         </FloatingWindow>
       </div>
+
+      {/* About Modal */}
+      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 }
