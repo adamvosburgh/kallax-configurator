@@ -8,7 +8,14 @@ import { downloadJSON, downloadCSV, downloadPDF } from '../lib/download';
 export function ExportPanel() {
   const { params, analysis } = useDesignStore();
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [projectName, setProjectName] = useState('');
+
+  const getFilenameSuffix = () => {
+    const timestamp = new Date().toISOString().split('T')[0];
+    const cleanName = projectName.replace(/\s+/g, '');
+    return cleanName ? `${cleanName}-${timestamp}` : timestamp;
+  };
+
   const handleExportJSON = () => {
     const exportData = {
       design: params,
@@ -16,11 +23,10 @@ export function ExportPanel() {
       estimate: analysis.estimate,
       warnings: analysis.warnings,
     };
-    
-    const timestamp = new Date().toISOString().split('T')[0];
-    downloadJSON(exportData, `kallax-design-${timestamp}.json`);
+
+    downloadJSON(exportData, `kallax-design-${getFilenameSuffix()}.json`);
   };
-  
+
   const handleExportCSV = () => {
     const csvData = analysis.parts.map(part => ({
       'Part ID': part.id,
@@ -32,18 +38,16 @@ export function ExportPanel() {
       'Dimensions': formatDimensions(part.lengthIn, part.widthIn, part.thicknessIn),
       'Notes': part.notes || '',
     }));
-    
+
     const csv = Papa.unparse(csvData);
-    const timestamp = new Date().toISOString().split('T')[0];
-    downloadCSV(csv, `kallax-cut-list-${timestamp}.csv`);
+    downloadCSV(csv, `kallax-cut-list-${getFilenameSuffix()}.csv`);
   };
-  
+
   const handleExportPDF = async () => {
     setIsGenerating(true);
     try {
       const pdfBytes = await generatePDFBooklet(analysis.parts, params);
-      const timestamp = new Date().toISOString().split('T')[0];
-      downloadPDF(pdfBytes, `kallax-instructions-${timestamp}.pdf`);
+      downloadPDF(pdfBytes, `kallax-instructions-${getFilenameSuffix()}.pdf`);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -75,6 +79,18 @@ export function ExportPanel() {
   
   return (
     <div className="space-y-4">
+      {/* Project Name Input */}
+      <div className="field-group" style={{ marginBottom: '1rem' }}>
+        <label className="form-label">Project Name (optional)</label>
+        <input
+          type="text"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          placeholder="e.g., Office Shelf"
+          className="input-field"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={handleExportCSV}

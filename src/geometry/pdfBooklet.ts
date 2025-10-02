@@ -5,6 +5,7 @@ import { svgToPng } from '../lib/svgToImage';
 import { generateSheetLayouts } from './ripGenerator';
 import { generateAllSheetSvgs, generateOversizedPartSvgs } from './cutListSvg';
 import { captureAxonometricView } from './sceneCapture';
+import instructionGuysUrl from '../assets/InstructionGuys.png';
 
 export async function generatePDFBooklet(
   parts: Part[], 
@@ -147,7 +148,7 @@ export async function generatePDFBooklet(
   
   try {
     // Load and embed instruction guys image scaled to 80% of page width, centered
-    const instructionGuysBytes = await fetch('/src/assets/InstructionGuys.png').then(res => res.arrayBuffer());
+    const instructionGuysBytes = await fetch(instructionGuysUrl).then(res => res.arrayBuffer());
     const instructionGuysImage = await pdfDoc.embedPng(instructionGuysBytes);
     
     // Scale to 80% of page width while maintaining aspect ratio
@@ -473,11 +474,11 @@ either side will add 1/8" to either side)`
   
   // Process regular sheet pages first
   for (let pageIndex = 0; pageIndex < regularSheetPages; pageIndex++) {
-    const page4 = addPage();
+    const page5 = addPage();
     yPos = pageHeight - margin;
     
     // Header
-    page4.drawText('Cut List', {
+    page5.drawText('Cut List', {
       x: margin,
       y: yPos,
       size: 20,
@@ -519,7 +520,7 @@ either side will add 1/8" to either side)`
       if (line === '') {
         yPos -= 6; // Spacing for empty lines
       } else {
-        page4.drawText(line, {
+        page5.drawText(line, {
           x: margin,
           y: yPos,
           size: 11,
@@ -533,7 +534,7 @@ either side will add 1/8" to either side)`
     yPos -= 20;
     
     // Note about dimensions
-    page4.drawText('**Note - these dimensions may change depending on your preferred assembly method!! See previous section**', {
+    page5.drawText('**Note - these dimensions may change depending on your preferred assembly method!! See previous section**', {
       x: margin,
       y: yPos,
       size: 10,
@@ -561,7 +562,7 @@ either side will add 1/8" to either side)`
         const pngImage = await pdfDoc.embedPng(pngBytes);
         const scaledDims = pngImage.scale(imageHeight / 500);
         
-        page4.drawImage(pngImage, {
+        page5.drawImage(pngImage, {
           x: currentX,
           y: yPos - scaledDims.height,
           width: scaledDims.width,
@@ -585,7 +586,7 @@ either side will add 1/8" to either side)`
           borderWidth: 1,
         });
         
-        page4.drawText('Sheet diagram unavailable', {
+        page5.drawText('Sheet diagram unavailable', {
           x: currentX + fallbackWidth/2 - 60,
           y: yPos - imageHeight/2,
           size: 10,
@@ -771,12 +772,12 @@ either side will add 1/8" to either side)`
     });
   }
   
-  // ===== PAGE 5: Thank You =====
-  const page5 = addPage();
+  // ===== PAGE 6: Thank You =====
+  const page6 = addPage();
   yPos = pageHeight - margin;
   
   // Header
-  page5.drawText('Notes', {
+  page6.drawText('Notes', {
     x: margin,
     y: yPos,
     size: 20,
@@ -785,11 +786,12 @@ either side will add 1/8" to either side)`
   yPos -= 60;
   
   // Body
-  page5.drawText('Hope this helps. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\n If you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
+  page6.drawText('This instruction set was generated from adamvosburgh.github.io/kallax-configurator. \nI hope this is helpful. I built this project after making some of these shelving units myself, out of a desire to open source some of the intellectual labor in planning the units. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\nIf you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
     x: margin,
     y: yPos,
     size: 12,
     font: helveticaFont,
+    maxWidth: contentWidth,
   });
   
   const pdfBytes = await pdfDoc.save();
