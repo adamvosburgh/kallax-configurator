@@ -20,6 +20,10 @@ export function GridEditor() {
   const [hoveredWarning, setHoveredWarning] = useState<string | null>(null);
   const [warningPosition, setWarningPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Local state for input fields to allow empty strings
+  const [rowsInput, setRowsInput] = useState(String(params.rows));
+  const [colsInput, setColsInput] = useState(String(params.cols));
+
   // Check if a cell is part of a merge
   const getCellMerge = (row: number, col: number): { merge: MergeSpec; index: number } | null => {
     const index = params.merges.findIndex(merge =>
@@ -137,8 +141,21 @@ export function GridEditor() {
             type="number"
             min="1"
             max={MAX_GRID_SIZE}
-            value={params.rows}
-            onChange={(e) => setRows(parseInt(e.target.value))}
+            value={rowsInput}
+            onChange={(e) => {
+              setRowsInput(e.target.value);
+              const val = parseInt(e.target.value);
+              if (!isNaN(val) && val >= 1) {
+                setRows(val);
+              }
+            }}
+            onBlur={() => {
+              const val = parseInt(rowsInput);
+              if (isNaN(val) || val < 1 || rowsInput === '') {
+                setRows(1);
+                setRowsInput('1');
+              }
+            }}
             className="input-field"
           />
         </div>
@@ -148,8 +165,21 @@ export function GridEditor() {
             type="number"
             min="1"
             max={MAX_GRID_SIZE}
-            value={params.cols}
-            onChange={(e) => setCols(parseInt(e.target.value))}
+            value={colsInput}
+            onChange={(e) => {
+              setColsInput(e.target.value);
+              const val = parseInt(e.target.value);
+              if (!isNaN(val) && val >= 1) {
+                setCols(val);
+              }
+            }}
+            onBlur={() => {
+              const val = parseInt(colsInput);
+              if (isNaN(val) || val < 1 || colsInput === '') {
+                setCols(1);
+                setColsInput('1');
+              }
+            }}
             className="input-field"
           />
         </div>

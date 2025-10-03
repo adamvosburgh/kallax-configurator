@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { DoorHardwarePosition } from '../geometry/types';
 
@@ -19,6 +20,11 @@ export function OptionsPanel() {
     type: 'pull-hole',
     insetInches: 1,
   };
+
+  // Local state for input fields to allow empty strings
+  const [revealInput, setRevealInput] = useState(String(params.doorMode.revealInches || 0.0625));
+  const [overlayInput, setOverlayInput] = useState(String(params.doorMode.overlayInches || 0.25));
+  const [hardwareInsetInput, setHardwareInsetInput] = useState(String(doorHardware.insetInches));
 
   const handlePositionClick = (position: DoorHardwarePosition) => {
     setDoorHardwarePosition(position);
@@ -75,8 +81,21 @@ export function OptionsPanel() {
                 <input
                   type="number"
                   step="0.0625"
-                  value={params.doorMode.revealInches || 0.0625}
-                  onChange={(e) => setDoorReveal(parseFloat(e.target.value) || 0.0625)}
+                  value={revealInput}
+                  onChange={(e) => {
+                    setRevealInput(e.target.value);
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 0) {
+                      setDoorReveal(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    const val = parseFloat(revealInput);
+                    if (isNaN(val) || val < 0 || revealInput === '') {
+                      setDoorReveal(0.0625);
+                      setRevealInput('0.0625');
+                    }
+                  }}
                   className="input-field"
                 />
               </div>
@@ -90,8 +109,21 @@ export function OptionsPanel() {
                 <input
                   type="number"
                   step="0.125"
-                  value={params.doorMode.overlayInches || 0.25}
-                  onChange={(e) => setDoorOverlay(parseFloat(e.target.value) || 0.25)}
+                  value={overlayInput}
+                  onChange={(e) => {
+                    setOverlayInput(e.target.value);
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 0) {
+                      setDoorOverlay(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    const val = parseFloat(overlayInput);
+                    if (isNaN(val) || val < 0 || overlayInput === '') {
+                      setDoorOverlay(0.25);
+                      setOverlayInput('0.25');
+                    }
+                  }}
                   className="input-field"
                 />
               </div>
@@ -125,8 +157,21 @@ export function OptionsPanel() {
               <input
                 type="number"
                 step="0.125"
-                value={doorHardware.insetInches}
-                onChange={(e) => setDoorHardwareInset(parseFloat(e.target.value) || 1)}
+                value={hardwareInsetInput}
+                onChange={(e) => {
+                  setHardwareInsetInput(e.target.value);
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val) && val >= 0) {
+                    setDoorHardwareInset(val);
+                  }
+                }}
+                onBlur={() => {
+                  const val = parseFloat(hardwareInsetInput);
+                  if (isNaN(val) || val < 0 || hardwareInsetInput === '') {
+                    setDoorHardwareInset(1);
+                    setHardwareInsetInput('1');
+                  }
+                }}
                 className="input-field"
               />
             </div>

@@ -105,8 +105,8 @@ export function App() {
         )}
       </div>
 
-      {/* Left Docked Panel */}
-      <div className="docked-container left">
+      {/* Mobile: Single container with all panels */}
+      <div className="docked-container mobile-all-panels" style={{ display: 'none' }}>
         <FloatingWindow
           id="grid-layout"
           title="Grid Layout"
@@ -115,7 +115,6 @@ export function App() {
           collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 0 }}
-          
         >
           <GridEditor />
         </FloatingWindow>
@@ -131,7 +130,7 @@ export function App() {
         >
           <KeyPanel />
         </FloatingWindow>
-        
+
         <FloatingWindow
           id="options"
           title="Options"
@@ -140,14 +139,10 @@ export function App() {
           collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 1 }}
-          font-size='0.75rem'
         >
           <OptionsPanel />
         </FloatingWindow>
-      </div>
 
-      {/* Right Docked Panel */}
-      <div className="docked-container right">
         <FloatingWindow
           id="controls"
           title="Controls"
@@ -162,6 +157,72 @@ export function App() {
 
         <FloatingWindow
           id="export"
+          title="Export"
+          defaultPosition={{ x: 50, y: 500 }}
+          defaultSize={{ width: 420, height: 350 }}
+          collapsedPreview="PDF Export"
+          defaultDocked={true}
+          dockedPosition={{ side: 'right', order: 1 }}
+        >
+          <ExportPanel />
+        </FloatingWindow>
+      </div>
+
+      {/* Desktop: Left Docked Panel */}
+      <div className="docked-container left desktop-only">
+        <FloatingWindow
+          id="grid-layout-desktop"
+          title="Grid Layout"
+          defaultPosition={{ x: 50, y: 120 }}
+          defaultSize={{ width: 500, height: 800 }}
+          collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 0 }}
+        >
+          <GridEditor />
+        </FloatingWindow>
+
+        <FloatingWindow
+          id="key-desktop"
+          title="Key"
+          defaultPosition={{ x: 1070, y: 120 }}
+          defaultSize={{ width: 280, height: 450 }}
+          collapsedPreview="3D Parts Legend"
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 2 }}
+        >
+          <KeyPanel />
+        </FloatingWindow>
+
+        <FloatingWindow
+          id="options-desktop"
+          title="Options"
+          defaultPosition={{ x: 570, y: 300 }}
+          defaultSize={{ width: 420, height: 600 }}
+          collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
+          defaultDocked={true}
+          dockedPosition={{ side: 'left', order: 1 }}
+        >
+          <OptionsPanel />
+        </FloatingWindow>
+      </div>
+
+      {/* Desktop: Right Docked Panel */}
+      <div className="docked-container right desktop-only">
+        <FloatingWindow
+          id="controls-desktop"
+          title="Controls"
+          defaultPosition={{ x: 570, y: 120 }}
+          defaultSize={{ width: 480, height: 850 }}
+          collapsedPreview="Materials & Dimensions"
+          defaultDocked={true}
+          dockedPosition={{ side: 'right', order: 0 }}
+        >
+          <ControlsPanel />
+        </FloatingWindow>
+
+        <FloatingWindow
+          id="export-desktop"
           title="Export"
           defaultPosition={{ x: 50, y: 500 }}
           defaultSize={{ width: 420, height: 350 }}

@@ -30,6 +30,10 @@ export function ControlsPanel() {
   const [hoveredInfo, setHoveredInfo] = useState<string | null>(null);
   const [infoPosition, setInfoPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Local state for input fields to allow empty strings
+  const [interiorClearanceInput, setInteriorClearanceInput] = useState(String(params.interiorClearanceInches));
+  const [depthInput, setDepthInput] = useState(String(params.depthInches));
+
   const nominalOptions: NominalThickness[] = ['1/4"', '1/2"', '3/4"'];
   const frameOptions: NominalThickness[] = ['1/2"', '3/4"']; // No 1/4" for frame
 
@@ -76,8 +80,21 @@ export function ControlsPanel() {
             <input
               type="number"
               step="0.125"
-              value={params.interiorClearanceInches}
-              onChange={(e) => setInteriorClearance(parseFloat(e.target.value) || 13.25)}
+              value={interiorClearanceInput}
+              onChange={(e) => {
+                setInteriorClearanceInput(e.target.value);
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                  setInteriorClearance(val);
+                }
+              }}
+              onBlur={() => {
+                const val = parseFloat(interiorClearanceInput);
+                if (isNaN(val) || val <= 0 || interiorClearanceInput === '') {
+                  setInteriorClearance(13.25);
+                  setInteriorClearanceInput('13.25');
+                }
+              }}
               className="input-field"
             />
           </div>
@@ -97,8 +114,21 @@ export function ControlsPanel() {
             <input
               type="number"
               step="0.125"
-              value={params.depthInches}
-              onChange={(e) => setDepth(parseFloat(e.target.value) || 15.375)}
+              value={depthInput}
+              onChange={(e) => {
+                setDepthInput(e.target.value);
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                  setDepth(val);
+                }
+              }}
+              onBlur={() => {
+                const val = parseFloat(depthInput);
+                if (isNaN(val) || val <= 0 || depthInput === '') {
+                  setDepth(15.375);
+                  setDepthInput('15.375');
+                }
+              }}
               className="input-field"
             />
           </div>
