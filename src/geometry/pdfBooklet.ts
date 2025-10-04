@@ -4,6 +4,7 @@ import { toFraction32, formatDimensions } from './format';
 import { svgToPng } from '../lib/svgToImage';
 import { generateSheetLayouts } from './ripGenerator';
 import { generateAllSheetSvgs, generateOversizedPartSvgs } from './cutListSvg';
+import { generateAllAssemblyGuideSvgs } from './assemblyGuideSvg';
 import { captureAxonometricView } from './sceneCapture';
 import instructionGuysUrl from '../assets/InstructionGuys.png';
 
@@ -771,29 +772,183 @@ either side will add 1/8" to either side)`
       color: rgb(0.6, 0, 0),
     });
   }
-  
-  // ===== PAGE 6: Thank You =====
-  const page6 = addPage();
+
+  // ===== ASSEMBLY GUIDE PAGES =====
+  const assemblyGuideSvgs = generateAllAssemblyGuideSvgs(parts, params);
+
+  if (assemblyGuideSvgs.length > 0) {
+    // Group by role
+    const groups: { [role: string]: typeof assemblyGuideSvgs } = {
+      'Top/Bottom': [],
+      'Sides': [],
+      'Vertical Dividers': [],
+      'Shelves': [],
+    };
+
+    for (const item of assemblyGuideSvgs) {
+      if (item.role === 'Top' || item.role === 'Bottom') {
+        groups['Top/Bottom'].push(item);
+      } else if (item.role === 'Side') {
+        groups['Sides'].push(item);
+      } else if (item.role === 'VerticalDivider') {
+        groups['Vertical Dividers'].push(item);
+      } else if (item.role === 'BayShelf') {
+        groups['Shelves'].push(item);
+      }
+    }
+
+    // Start first assembly guide page
+    let assemblyPage = addPage();
+    yPos = pageHeight - margin;
+
+    // Header
+    assemblyPage.drawText('Assembly Guide', {
+      x: margin,
+      y: yPos,
+      size: 20,
+      font: helveticaBoldFont,
+    });
+    yPos -= 30;
+
+    assemblyPage.drawText('Joint locations for frame pieces', {
+      x: margin,
+      y: yPos,
+      size: 14,
+      font: helveticaFont,
+      color: rgb(0.3, 0.3, 0.3),
+    });
+    yPos -= 40;
+
+    let currentY = yPos;
+    let hasContentOnPage = false;
+
+    // Render each group
+    for (const [groupName, items] of Object.entries(groups)) {
+      if (items.length === 0) continue;
+
+      // Check if we need a new page for this group header
+      if (currentY < margin + 200) {
+        assemblyPage = addPage();
+        currentY = pageHeight - margin;
+        hasContentOnPage = false;
+      }
+
+      // Group title
+      assemblyPage.drawText(groupName, {
+        x: margin,
+        y: currentY,
+        size: 14,
+        font: helveticaBoldFont,
+        color: rgb(0, 0, 0),
+      });
+      currentY -= 25;
+      hasContentOnPage = true;
+
+      // Render parts in this group
+      let currentX = margin;
+      const imagesPerRow = 2;
+      let imagesInRow = 0;
+      const imageMaxWidth = (contentWidth - 40) / imagesPerRow;
+      const imageMaxHeight = 200;
+
+      for (const item of items) {
+        try {
+          // Parse SVG to get dimensions
+          const widthMatch = item.svg.match(/width="([0-9.]+)"/);
+          const heightMatch = item.svg.match(/height="([0-9.]+)"/);
+
+          if (!widthMatch || !heightMatch) continue;
+
+          const svgWidth = parseFloat(widthMatch[1]);
+          const svgHeight = parseFloat(heightMatch[1]);
+
+          // Calculate scaled dimensions to fit in available space
+          const aspectRatio = svgWidth / svgHeight;
+          let imageWidth = imageMaxWidth;
+          let imageHeight = imageMaxWidth / aspectRatio;
+
+          if (imageHeight > imageMaxHeight) {
+            imageHeight = imageMaxHeight;
+            imageWidth = imageMaxHeight * aspectRatio;
+          }
+
+          // Check if we need a new row
+          if (imagesInRow >= imagesPerRow) {
+            currentX = margin;
+            currentY -= imageMaxHeight + 20;
+            imagesInRow = 0;
+
+            // Check if we need a new page
+            if (currentY < margin + imageMaxHeight + 50) {
+              assemblyPage = addPage();
+              currentY = pageHeight - margin;
+
+              // Repeat group title on new page
+              assemblyPage.drawText(`${groupName} (continued)`, {
+                x: margin,
+                y: currentY,
+                size: 14,
+                font: helveticaBoldFont,
+                color: rgb(0, 0, 0),
+              });
+              currentY -= 25;
+              hasContentOnPage = true;
+            }
+          }
+
+          // Convert SVG to PNG and embed
+          const pngBytes = await svgToPng(item.svg, {
+            width: Math.round(svgWidth * 2), // 2x for quality
+            height: Math.round(svgHeight * 2),
+            scale: 1,
+          });
+
+          const pngImage = await pdfDoc.embedPng(pngBytes);
+
+          assemblyPage.drawImage(pngImage, {
+            x: currentX,
+            y: currentY - imageHeight,
+            width: imageWidth,
+            height: imageHeight,
+          });
+
+          currentX += imageMaxWidth + 20;
+          imagesInRow++;
+
+        } catch (error) {
+          console.warn(`Failed to embed assembly guide for ${item.partId}:`, error);
+        }
+      }
+
+      // Move to next group (new row)
+      if (imagesInRow > 0) {
+        currentY -= imageMaxHeight + 40; // Extra space between groups
+      }
+    }
+  }
+
+  // ===== PAGE N: Thank You =====
+  const thankYouPage = addPage();
   yPos = pageHeight - margin;
-  
+
   // Header
-  page6.drawText('Notes', {
+  thankYouPage.drawText('Notes', {
     x: margin,
     y: yPos,
     size: 20,
     font: helveticaBoldFont,
   });
   yPos -= 60;
-  
+
   // Body
-  page6.drawText('This instruction set was generated from adamvosburgh.github.io/kallax-configurator. \nI hope this is helpful. I built this project after making some of these shelving units myself, out of a desire to open source some of the intellectual labor in planning the units. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\nIf you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
+  thankYouPage.drawText('This instruction set was generated from adamvosburgh.github.io/kallax-configurator. \nI hope this is helpful. I built this project after making some of these shelving units myself, out of a desire to open source some of the intellectual labor in planning the units. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\nIf you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
     x: margin,
     y: yPos,
     size: 12,
     font: helveticaFont,
     maxWidth: contentWidth,
   });
-  
+
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
 }
