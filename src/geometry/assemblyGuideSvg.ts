@@ -154,8 +154,52 @@ export function calculateIntersections(
     });
   }
 
-  // Bay shelves don't get intersection marks (as per user request)
-  // Because the marks would need to be on the butt ends
+  // Calculate intersections for Bay Shelves
+  const bayShelfParts = frameParts.filter(p => p.role === 'BayShelf');
+  for (const bayPart of bayShelfParts) {
+    const intersections: Array<{ position: number; label: string }> = [];
+
+    // Parse bay info from the part to find which row it's in and which columns it spans
+    if (!bayPart.bay) continue;
+
+    const shelfRow = bayPart.bay.row;
+    const shelfColStart = bayPart.bay.colStart;
+    const shelfColEnd = bayPart.bay.colEnd;
+
+    // Find vertical dividers that intersect this shelf
+    const presentVerticals = Array.from(layout.presentVerticals).sort((a, b) => a - b);
+
+    for (const col of presentVerticals) {
+      // Check if this vertical is within the shelf's span and not at the edges
+      if (col > shelfColStart && col < shelfColEnd) {
+        // Check if this vertical divider exists at this row
+        const hasVerticalAtRow = layout.verticalSegments.some(seg =>
+          seg.column === col &&
+          shelfRow >= seg.rowStart &&
+          shelfRow <= seg.rowEnd
+        );
+
+        if (hasVerticalAtRow) {
+          // Position from left edge of shelf to centerline of vertical divider
+          // Distance from shelfColStart to col
+          const position = (col - shelfColStart) * (interiorClearance + frameThickness) - frameThickness / 2;
+          intersections.push({ position, label: `VDiv-${col}` });
+        }
+      }
+    }
+
+    // Only add to map if there are intersections
+    if (intersections.length > 0) {
+      intersectionMap.set(bayPart.id, {
+        partId: bayPart.id,
+        role: bayPart.role,
+        lengthIn: bayPart.lengthIn,
+        widthIn: bayPart.widthIn,
+        thicknessIn: bayPart.thicknessIn,
+        intersections: intersections.sort((a, b) => a.position - b.position),
+      });
+    }
+  }
 
   return intersectionMap;
 }
@@ -217,87 +261,125 @@ export function generatePartAssemblySvg(
     svg += `</text>`;
   }
 
-  // Intersection lines and dimensions
-  if (isHorizontal) {
-    // For horizontal pieces (Top, Bottom), intersections are vertical lines
-    let prevPosition = 0;
+  // Intersection lines and dimensions (only if there are intersections)
+  if (intersections.length > 0) {
+    if (isHorizontal) {
+      // For horizontal pieces (Top, Bottom), intersections are vertical lines
+      let prevPosition = 0;
 
-    for (let i = 0; i <= intersections.length; i++) {
-      // Draw intersection line (skip on last iteration which handles final edge dimension)
-      if (i < intersections.length) {
-        const intersection = intersections[i];
-        const scaledPos = intersection.position * scale;
-        const x = rectX + scaledPos;
+      for (let i = 0; i <= intersections.length; i++) {
+        // Draw intersection line (skip on last iteration which handles final edge dimension)
+        if (i < intersections.length) {
+          const intersection = intersections[i];
+          const scaledPos = intersection.position * scale;
+          const x = rectX + scaledPos;
 
-        // Draw dotted line
-        svg += `<line x1="${x}" y1="${rectY}" x2="${x}" y2="${rectY + scaledWidth}" `;
-        svg += `stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,4"/>`;
+          // Draw dotted line
+          svg += `<line x1="${x}" y1="${rectY}" x2="${x}" y2="${rectY + scaledWidth}" `;
+          svg += `stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,4"/>`;
+
+          // Add arrow and label below the part
+          const arrowY = rectY + scaledWidth + 5;
+          const arrowEndY = arrowY + 8;
+
+          // Arrow line
+          svg += `<line x1="${x}" y1="${arrowY}" x2="${x}" y2="${arrowEndY}" `;
+          svg += `stroke="#111827" stroke-width="1"/>`;
+
+          // Arrow head
+          svg += `<polygon points="${x},${arrowEndY} ${x - 3},${arrowEndY - 5} ${x + 3},${arrowEndY - 5}" `;
+          svg += `fill="#111827"/>`;
+
+          // Part ID label
+          svg += `<text x="${x}" y="${arrowEndY + 12}" `;
+          svg += `font-family="monospace" font-size="9" fill="#111827" text-anchor="middle">`;
+          svg += intersection.label;
+          svg += `</text>`;
+        }
+
+        // Dimension from previous position to current (or to end edge)
+        const dimStart = rectX + prevPosition * scale;
+        const dimEnd = i < intersections.length
+          ? rectX + intersections[i].position * scale
+          : rectX + scaledLength;
+        const dimY = rectY + scaledWidth / 2;
+
+        // Dimension line
+        svg += `<line x1="${dimStart}" y1="${dimY}" x2="${dimEnd}" y2="${dimY}" `;
+        svg += `stroke="#059669" stroke-width="1"/>`;
+
+        // Dimension text
+        const distance = i < intersections.length
+          ? intersections[i].position - prevPosition
+          : lengthIn - prevPosition;
+        const dimText = toFraction32(distance);
+        svg += `<text x="${(dimStart + dimEnd) / 2}" y="${dimY - 5}" `;
+        svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="middle">`;
+        svg += dimText;
+        svg += `</text>`;
+
+        if (i < intersections.length) {
+          prevPosition = intersections[i].position;
+        }
       }
+    } else {
+      // For vertical pieces (Sides, VerticalDividers), intersections are horizontal lines
+      let prevPosition = 0;
 
-      // Dimension from previous position to current (or to end edge)
-      const dimStart = rectX + prevPosition * scale;
-      const dimEnd = i < intersections.length
-        ? rectX + intersections[i].position * scale
-        : rectX + scaledLength;
-      const dimY = rectY + scaledWidth / 2;
+      for (let i = 0; i <= intersections.length; i++) {
+        // Draw intersection line (skip on last iteration which handles final edge dimension)
+        if (i < intersections.length) {
+          const intersection = intersections[i];
+          const scaledPos = intersection.position * scale;
+          const y = rectY + scaledPos;
 
-      // Dimension line
-      svg += `<line x1="${dimStart}" y1="${dimY}" x2="${dimEnd}" y2="${dimY}" `;
-      svg += `stroke="#059669" stroke-width="1"/>`;
+          // Draw dotted line
+          svg += `<line x1="${rectX}" y1="${y}" x2="${rectX + scaledLength}" y2="${y}" `;
+          svg += `stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,4"/>`;
 
-      // Dimension text
-      const distance = i < intersections.length
-        ? intersections[i].position - prevPosition
-        : lengthIn - prevPosition;
-      const dimText = toFraction32(distance);
-      svg += `<text x="${(dimStart + dimEnd) / 2}" y="${dimY - 5}" `;
-      svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="middle">`;
-      svg += dimText;
-      svg += `</text>`;
+          // Add arrow and label to the right of the part
+          const arrowX = rectX + scaledLength + 5;
+          const arrowEndX = arrowX + 8;
 
-      if (i < intersections.length) {
-        prevPosition = intersections[i].position;
-      }
-    }
-  } else {
-    // For vertical pieces (Sides, VerticalDividers), intersections are horizontal lines
-    let prevPosition = 0;
+          // Arrow line
+          svg += `<line x1="${arrowX}" y1="${y}" x2="${arrowEndX}" y2="${y}" `;
+          svg += `stroke="#111827" stroke-width="1"/>`;
 
-    for (let i = 0; i <= intersections.length; i++) {
-      // Draw intersection line (skip on last iteration which handles final edge dimension)
-      if (i < intersections.length) {
-        const intersection = intersections[i];
-        const scaledPos = intersection.position * scale;
-        const y = rectY + scaledPos;
+          // Arrow head
+          svg += `<polygon points="${arrowEndX},${y} ${arrowEndX - 5},${y - 3} ${arrowEndX - 5},${y + 3}" `;
+          svg += `fill="#111827"/>`;
 
-        // Draw dotted line
-        svg += `<line x1="${rectX}" y1="${y}" x2="${rectX + scaledLength}" y2="${y}" `;
-        svg += `stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,4"/>`;
-      }
+          // Part ID label
+          svg += `<text x="${arrowEndX + 3}" y="${y + 3}" `;
+          svg += `font-family="monospace" font-size="9" fill="#111827" text-anchor="start">`;
+          svg += intersection.label;
+          svg += `</text>`;
+        }
 
-      // Dimension from previous position to current (or to end edge)
-      const dimStart = rectY + prevPosition * scale;
-      const dimEnd = i < intersections.length
-        ? rectY + intersections[i].position * scale
-        : rectY + scaledWidth;
-      const dimX = rectX + scaledLength / 2;
+        // Dimension from previous position to current (or to end edge)
+        const dimStart = rectY + prevPosition * scale;
+        const dimEnd = i < intersections.length
+          ? rectY + intersections[i].position * scale
+          : rectY + scaledWidth;
+        const dimX = rectX + scaledLength / 2;
 
-      // Dimension line
-      svg += `<line x1="${dimX}" y1="${dimStart}" x2="${dimX}" y2="${dimEnd}" `;
-      svg += `stroke="#059669" stroke-width="1"/>`;
+        // Dimension line
+        svg += `<line x1="${dimX}" y1="${dimStart}" x2="${dimX}" y2="${dimEnd}" `;
+        svg += `stroke="#059669" stroke-width="1"/>`;
 
-      // Dimension text
-      const distance = i < intersections.length
-        ? intersections[i].position - prevPosition
-        : lengthIn - prevPosition;
-      const dimText = toFraction32(distance);
-      svg += `<text x="${dimX + 5}" y="${(dimStart + dimEnd) / 2 + 3}" `;
-      svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="start">`;
-      svg += dimText;
-      svg += `</text>`;
+        // Dimension text
+        const distance = i < intersections.length
+          ? intersections[i].position - prevPosition
+          : lengthIn - prevPosition;
+        const dimText = toFraction32(distance);
+        svg += `<text x="${dimX + 5}" y="${(dimStart + dimEnd) / 2 + 3}" `;
+        svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="start">`;
+        svg += dimText;
+        svg += `</text>`;
 
-      if (i < intersections.length) {
-        prevPosition = intersections[i].position;
+        if (i < intersections.length) {
+          prevPosition = intersections[i].position;
+        }
       }
     }
   }
@@ -327,10 +409,18 @@ export function generateAllAssemblyGuideSvgs(
   const baseScale = 400 / maxDimension; // Target 400px for longest dimension
 
   for (const part of frameParts) {
-    const info = intersectionMap.get(part.id);
-    if (!info || (part.role === 'BayShelf' && info.intersections.length === 0)) {
-      // Skip bay shelves since they don't show intersections
-      continue;
+    let info = intersectionMap.get(part.id);
+
+    // If no intersection info exists, create empty info for this part
+    if (!info) {
+      info = {
+        partId: part.id,
+        role: part.role,
+        lengthIn: part.lengthIn,
+        widthIn: part.widthIn,
+        thicknessIn: part.thicknessIn,
+        intersections: [],
+      };
     }
 
     const svg = generatePartAssemblySvg(info, baseScale);

@@ -797,40 +797,39 @@ either side will add 1/8" to either side)`
       }
     }
 
+    // Helper to add assembly guide page header
+    const addAssemblyPageHeader = (page: any) => {
+      let headerY = pageHeight - margin;
+      page.drawText('Assembly Guide', {
+        x: margin,
+        y: headerY,
+        size: 20,
+        font: helveticaBoldFont,
+      });
+      headerY -= 30;
+
+      page.drawText('Joint locations for frame pieces. Note: This may not perform well for pieces with merges. Always double check dims.', {
+        x: margin,
+        y: headerY,
+        size: 14,
+        font: helveticaFont,
+        color: rgb(0.3, 0.3, 0.3),
+      });
+      return headerY - 40; // Return Y position after header
+    };
+
     // Start first assembly guide page
     let assemblyPage = addPage();
-    yPos = pageHeight - margin;
-
-    // Header
-    assemblyPage.drawText('Assembly Guide', {
-      x: margin,
-      y: yPos,
-      size: 20,
-      font: helveticaBoldFont,
-    });
-    yPos -= 30;
-
-    assemblyPage.drawText('Joint locations for frame pieces', {
-      x: margin,
-      y: yPos,
-      size: 14,
-      font: helveticaFont,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-    yPos -= 40;
-
-    let currentY = yPos;
-    let hasContentOnPage = false;
+    let currentY = addAssemblyPageHeader(assemblyPage);
 
     // Render each group
     for (const [groupName, items] of Object.entries(groups)) {
       if (items.length === 0) continue;
 
       // Check if we need a new page for this group header
-      if (currentY < margin + 200) {
+      if (currentY < margin + 100) {
         assemblyPage = addPage();
-        currentY = pageHeight - margin;
-        hasContentOnPage = false;
+        currentY = addAssemblyPageHeader(assemblyPage);
       }
 
       // Group title
@@ -842,7 +841,6 @@ either side will add 1/8" to either side)`
         color: rgb(0, 0, 0),
       });
       currentY -= 25;
-      hasContentOnPage = true;
 
       // Render parts in this group
       let currentX = margin;
@@ -877,23 +875,24 @@ either side will add 1/8" to either side)`
             currentX = margin;
             currentY -= imageMaxHeight + 20;
             imagesInRow = 0;
+          }
 
-            // Check if we need a new page
-            if (currentY < margin + imageMaxHeight + 50) {
-              assemblyPage = addPage();
-              currentY = pageHeight - margin;
+          // Check if we need a new page (check before placing image)
+          if (currentY - imageHeight < margin) {
+            assemblyPage = addPage();
+            currentY = addAssemblyPageHeader(assemblyPage);
 
-              // Repeat group title on new page
-              assemblyPage.drawText(`${groupName} (continued)`, {
-                x: margin,
-                y: currentY,
-                size: 14,
-                font: helveticaBoldFont,
-                color: rgb(0, 0, 0),
-              });
-              currentY -= 25;
-              hasContentOnPage = true;
-            }
+            // Repeat group title on new page
+            assemblyPage.drawText(`${groupName} (continued)`, {
+              x: margin,
+              y: currentY,
+              size: 14,
+              font: helveticaBoldFont,
+              color: rgb(0, 0, 0),
+            });
+            currentY -= 25;
+            currentX = margin;
+            imagesInRow = 0;
           }
 
           // Convert SVG to PNG and embed
@@ -920,7 +919,7 @@ either side will add 1/8" to either side)`
         }
       }
 
-      // Move to next group (new row)
+      // Move to next group (add spacing after the last row of this group)
       if (imagesInRow > 0) {
         currentY -= imageMaxHeight + 40; // Extra space between groups
       }
