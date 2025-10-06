@@ -847,7 +847,7 @@ either side will add 1/8" to either side)`
       const imagesPerRow = 2;
       let imagesInRow = 0;
       const imageMaxWidth = (contentWidth - 40) / imagesPerRow;
-      const imageMaxHeight = 200;
+      const imageMaxHeight = 160;
 
       for (const item of items) {
         try {
@@ -873,7 +873,7 @@ either side will add 1/8" to either side)`
           // Check if we need a new row
           if (imagesInRow >= imagesPerRow) {
             currentX = margin;
-            currentY -= imageMaxHeight + 20;
+            currentY -= imageMaxHeight + 10;
             imagesInRow = 0;
           }
 
@@ -921,7 +921,7 @@ either side will add 1/8" to either side)`
 
       // Move to next group (add spacing after the last row of this group)
       if (imagesInRow > 0) {
-        currentY -= imageMaxHeight + 40; // Extra space between groups
+        currentY -= imageMaxHeight + 20; // Extra space between groups
       }
     }
   }

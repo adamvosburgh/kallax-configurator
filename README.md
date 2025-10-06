@@ -1,8 +1,12 @@
 # Kallax Configurator
 
-**Live at: [kallax-configurator.app](https://kallax-configurator.app)**
+**Live at: [adamvosburgh.github.io/kallax-configurator](https://adamvosburgh.github.io/kallax-configurator)**
 
-A web-based tool for designing custom plywood modular shelving units inspired by IKEA Kallax furniture. Generate cut lists, 3D previews, and comprehensive assembly instructions.
+I recently moved into a new aparmtent, and I wanted to upgrade 
+
+A web-based tool for designing custom plywood modular shelving units using the IKEA Kallax module. This way, you can have ply furniture and use the Kallax inserts. 
+
+Generate cut lists, 3D previews, and comprehensive assembly instructions.
 
 ## Tech Stack
 
@@ -66,7 +70,7 @@ The app generates comprehensive multi-page PDF assembly instructions:
 ## Quick Start
 
 ### Using the Live App
-Visit [kallax-configurator.app](https://kallax-configurator.app) to start designing immediately.
+Visit [adamvosburgh.github.io/kallax-configurator](https://adamvosburgh.github.io/kallax-configurator) to start designing immediately.
 
 ### Local Development
 ```bash
