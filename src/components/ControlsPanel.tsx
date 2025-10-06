@@ -153,7 +153,7 @@ export function ControlsPanel() {
           {/* Frame Material */}
           <div className="field-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Frame Thickness
+              Frame Thickness (nominal / actual)
               <span
                 className="cursor-help"
                 style={{ fontSize: '14px' }}
@@ -192,7 +192,7 @@ export function ControlsPanel() {
           {params.hasBack && (
             <div className="field-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Back Thickness
+                Back Thickness (nominal / actual)
                 <span
                   className="cursor-help"
                   style={{ fontSize: '14px' }}
@@ -232,7 +232,7 @@ export function ControlsPanel() {
           {params.hasDoors && (
             <div className="field-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Door Thickness
+                Door Thickness (nominal / actual)
                 <span
                   className="cursor-help"
                   style={{ fontSize: '14px' }}
