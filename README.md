@@ -2,15 +2,25 @@
 
 **Live at: [adamvosburgh.github.io/kallax-configurator](https://adamvosburgh.github.io/kallax-configurator)**
 
-I recently moved into a new aparmtent, and I wanted to upgrade 
+Design your own modular shelving system – inspired by IKEA’s Kallax, but made for DIYers.
 
-A web-based tool for designing custom plywood modular shelving units using the IKEA Kallax module. This way, you can have ply furniture and use the Kallax inserts. 
+## About
 
-Generate cut lists, 3D previews, and comprehensive assembly instructions.
+I built this tool after moving into a new apartment and needing new furniture – entry cabinets, media consoles, nightstands, a mix of open and closed storage. I wanted to upgrade from my previous IKEA pieces – mainly in material – while keeping their functionality, modularity, and affordability. The IKEA kallax module worked well here, with the added bonus of also being compatible with the cheap accesories sold at IKEA. I built this furniture using an elaborate block system in rhino, and afterwards decided to open-source the schematic part of that for the community via this web app. You can see some pictures of the furniture I built [here](https://github.com/adamvosburgh/kallax-configurator/tree/314c09cde90953291393f55ff547647ce8ef9102/src/assets/example). It's not perfect, mainly because of my incredibly lean setup and the realities of building 13 pieces in a NYC apartment, but the measurements work well at least.
 
-## Tech Stack
+This tool lets you make plywood furniture that’s compatible with IKEA Kallax accessories, merge or resize modules (taller, wider, deeper, shallower), and customize doors, backs, and proportions. For reference: all my own builds are 16" deep (to match what I planned to place on top) and use 1/2" doors – which work fine structurally, but are too shallow for a standard Euro hinge.
 
-Built with React 19, TypeScript, Three.js (react-three-fiber), Zustand, and pdf-lib. Deployed via GitHub Pages.
+I made this for fun and hope others find it useful. If you make something with it, please share! You can reach me by email with builds, issues, or suggestions – I’ll do my best to reply.
+
+## How to Use
+
+Design your shelving: set the size of your grid, merge cells, add backs or doors, and adjust depth as you like. Watch for warnings: this tool doesn’t prevent bad design. It’s completely possible to make a structurally unstable unit here – so please pay attention to messages and remember: 3/4" plywood is heavy.
+
+Need help with strength? Try the [Sagulator](https://woodbin.com/calcs/sagulator/) to estimate shelf deflection.
+
+Collaborate: use “Share design link” to send a saved configuration to someone else.
+
+Build it: generate a PDF when you’re ready – it’ll create an IKEA-style assembly guide (with caveats and best practices noted inside,) that will give you a rip cut guide and schematics for joint placement. Please note that **the dimensions created are for butt joints**. If you would like to use dados/rabbets (which is what I used,) you will need to add on that additional length to the relevant parts. 
 
 ## Design Assumptions
 
@@ -67,7 +77,20 @@ The app generates comprehensive multi-page PDF assembly instructions:
 - **Share Link**: Compressed URL for easy sharing
 - **Assembly Instructions (PDF)**: Full booklet as described above
 
-## Quick Start
+## Known Limitations
+
+- Dimensions calculated for **butt joints only** (dados/rabbets require manual adjustment)
+- No structural analysis (relies on user judgment for large/unsupported spans)
+- Cut list optimization is basic (simple bin packing with 24" max rip width constraint)
+- The Assembly Guide on the PDF may not handle complex merged cell configurations accurately
+
+## Info about the app:
+
+### Tech Stack
+
+Built with React 19, TypeScript, Three.js (react-three-fiber), Zustand, and pdf-lib. Deployed via GitHub Pages.
+
+### Quick Start
 
 ### Using the Live App
 Visit [adamvosburgh.github.io/kallax-configurator](https://adamvosburgh.github.io/kallax-configurator) to start designing immediately.
@@ -106,13 +129,6 @@ npm run test src/geometry/
 ```
 
 Tests cover layout calculation, parts generation, and dimension formatting.
-
-## Known Limitations
-
-- Dimensions calculated for **butt joints only** (dados/rabbets require manual adjustment)
-- No structural analysis (relies on user judgment for large/unsupported spans)
-- Cut list optimization is basic (simple bin packing with 24" max rip width constraint)
-- **Assembly guide (Beta)** may not handle complex merged cell configurations accurately
 
 ## Contributing
 
