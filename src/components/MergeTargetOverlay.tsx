@@ -44,19 +44,12 @@ function MergeTargetMesh({ target, isHovered, onHover, onClick }: MergeTargetMes
     }
   }, [isNearMouse]);
 
-  // Log only when state changes to avoid spam
-  useEffect(() => {
-    if (isNearMouse) {
-      console.log('Plus icon hover state changed:', { position: target.position, isNearMouse });
-    }
-  }, [isNearMouse]);
 
   return (
     <group position={target.position}>
       {/* Invisible larger hit area for hover detection */}
       <mesh
         onClick={(e) => {
-          console.log('Plus icon clicked:', target);
           e.stopPropagation();
           onClick(target);
         }}
@@ -234,16 +227,6 @@ export function MergeTargetOverlay({ enabled }: MergeTargetOverlayProps) {
 
   const mergeTargets = calculateMergeTargets();
 
-  // One-time log on mount to confirm targets exist
-  useEffect(() => {
-    if (enabled) {
-      console.log('Merge targets on mount:', mergeTargets.length);
-      if (mergeTargets.length > 0) {
-        console.log('First target position:', mergeTargets[0].position);
-        console.log('First target opacity should be 0.2');
-      }
-    }
-  }, [enabled, mergeTargets.length]);
 
   if (!enabled) return null;
 

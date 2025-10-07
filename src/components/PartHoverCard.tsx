@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import type { Part } from '../geometry/types';
 import { formatDimensions } from '../geometry/format';
+import { useMobileAwarePosition } from '../lib/useMobileAwarePosition';
 
 interface PartHoverCardProps {
   part: Part;
@@ -8,12 +8,18 @@ interface PartHoverCardProps {
 }
 
 export function PartHoverCard({ part, position }: PartHoverCardProps) {
+  const { adjustedPosition, isMobile } = useMobileAwarePosition(position, {
+    cardWidth: 200,
+    cardHeight: 120,
+    mobileTopOffset: 80
+  });
+
   return (
     <div
-      className="hover-card"
+      className={`hover-card ${isMobile ? 'hover-card-mobile' : ''}`}
       style={{
-        left: position.x + 15,
-        top: position.y + 15
+        left: adjustedPosition.x,
+        top: adjustedPosition.y
       }}
     >
       <div className="text-mono text-xs font-semibold text-black">{part.id}</div>

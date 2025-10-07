@@ -3,6 +3,7 @@ import { useDesignStore } from '../state/useDesignStore';
 import type { NominalThickness } from '../geometry/types';
 import { createThicknessMap, THICKNESS_MAP } from '../geometry/constants';
 import { toFraction32 } from '../geometry/format';
+import { useMobileAwarePosition } from '../lib/useMobileAwarePosition';
 
 // Info text for tooltips
 const INFO_TEXT = {
@@ -29,6 +30,13 @@ export function ControlsPanel() {
 
   const [hoveredInfo, setHoveredInfo] = useState<string | null>(null);
   const [infoPosition, setInfoPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Mobile-aware positioning for info tooltip
+  const { adjustedPosition: adjustedInfoPos, isMobile: isInfoMobile } = useMobileAwarePosition(infoPosition, {
+    cardWidth: 300,
+    cardHeight: 100,
+    mobileTopOffset: 140
+  });
 
   // Local state for input fields to allow empty strings
   const [interiorClearanceInput, setInteriorClearanceInput] = useState(String(params.interiorClearanceInches));
@@ -331,11 +339,11 @@ export function ControlsPanel() {
       {/* Info hover tooltip */}
       {hoveredInfo && (
         <div
-          className="hover-card"
+          className={`hover-card ${isInfoMobile ? 'hover-card-mobile' : ''}`}
           style={{
             position: 'fixed',
-            left: infoPosition.x,
-            top: infoPosition.y,
+            left: adjustedInfoPos.x,
+            top: adjustedInfoPos.y,
             pointerEvents: 'none',
             zIndex: 1000,
             maxWidth: '300px',

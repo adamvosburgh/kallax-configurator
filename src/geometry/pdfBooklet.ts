@@ -940,7 +940,7 @@ either side will add 1/8" to either side)`
   yPos -= 60;
 
   // Body
-  thankYouPage.drawText('This instruction set was generated from adamvosburgh.github.io/kallax-configurator. \nI hope this is helpful. I built this project after making some of these shelving units myself, out of a desire to open source some of the intellectual labor in planning the units. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\nIf you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
+  thankYouPage.drawText('This instruction set was generated from adamvosburgh.github.io/kallax-configurator. \nMore info about the project can be found there. If you have any images to share of what you build, send them to me at adamvosburgh@gmail.com.\nIf you have any ideas for improvement, feel free to fork the repo on github and submit a pull request with your change.', {
     x: margin,
     y: yPos,
     size: 12,

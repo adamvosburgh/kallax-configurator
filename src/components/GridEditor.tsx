@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { MergeSpec } from '../geometry/types';
 import { MAX_GRID_SIZE } from '../geometry/constants';
+import { useMobileAwarePosition } from '../lib/useMobileAwarePosition';
 
 export function GridEditor() {
   const {
@@ -19,6 +20,13 @@ export function GridEditor() {
   const [dragEnd, setDragEnd] = useState<{ row: number; col: number } | null>(null);
   const [hoveredWarning, setHoveredWarning] = useState<string | null>(null);
   const [warningPosition, setWarningPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Mobile-aware positioning for warning tooltip
+  const { adjustedPosition: adjustedWarningPos, isMobile: isWarningMobile } = useMobileAwarePosition(warningPosition, {
+    cardWidth: 250,
+    cardHeight: 60,
+    mobileTopOffset: 120
+  });
 
   // Local state for input fields to allow empty strings
   const [rowsInput, setRowsInput] = useState(String(params.rows));
@@ -336,11 +344,11 @@ export function GridEditor() {
       {/* Warning hover tooltip */}
       {hoveredWarning && (
         <div
-          className="hover-card"
+          className={`hover-card ${isWarningMobile ? 'hover-card-mobile' : ''}`}
           style={{
             position: 'fixed',
-            left: warningPosition.x + 15,
-            top: warningPosition.y + 15,
+            left: adjustedWarningPos.x,
+            top: adjustedWarningPos.y,
             pointerEvents: 'none',
             zIndex: 1000,
           }}

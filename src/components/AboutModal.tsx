@@ -190,8 +190,11 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
               <h2>Open Source</h2>
               <p>This project is released under the MIT License, which means you can use, modify, and distribute it freely, provided you include the original license and copyright notice. If you’d like to contribute, feel free to fork the repo, create a feature branch, and submit a pull request.</p>
 
+              <h2>Contact</h2>
+              <p>Feel free to reach out to share what you make, for questions, for ideas, to adam vosburgh (at) gmail (dot) com.</p>
+
               <h2>A Note to IKEA</h2>
-              <p>Dear IKEA corporate lawyer, please don’t send me a cease and desist. I’m not using your branding, assets, or IP. This project is *pro-IKEA* – the Kallax is genuinely excellent. It doesn’t compete with IKEA products; DIYers are a different audience entirely. In fact, it probably encourages people to buy your accessories. You’re welcome, IKEA. Honestly, you should be paying me.</p>
+              <p>Dear IKEA corporate lawyer, please don’t send me a cease and desist. I’m not using your branding, assets, or IP. This project is *pro-IKEA* – the Kallax is a great shelving system. It doesn’t compete with IKEA products; DIYers are a different audience entirely. In fact, it probably encourages people to buy your accessories. Honestly, you should be paying me.</p>
 
             </div>
           </div>

@@ -53,7 +53,6 @@ export function App() {
         <div className="flex items-center justify-between w-full">
           <div>
             <h1 className="text-lg font-mono font-semibold text-black">Kallax Configurator</h1>
-            {/* <p className="text-xs font-mono text-gray-600 mt-0.5">Design modular shelving with IKEA-style instructions</p> */}
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -109,9 +108,9 @@ export function App() {
       <div className="docked-container mobile-all-panels" style={{ display: 'none' }}>
         <FloatingWindow
           id="grid-layout"
-          title="Grid Layout"
+          title="Grid"
           defaultPosition={{ x: 50, y: 120 }}
-          defaultSize={{ width: 500, height: 800 }}
+          defaultSize={{ width: 300, height: 800 }}
           collapsedPreview={`${params.rows}×${params.cols} • ${params.merges.length} merges`}
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 0 }}
@@ -135,7 +134,7 @@ export function App() {
           id="options"
           title="Options"
           defaultPosition={{ x: 570, y: 300 }}
-          defaultSize={{ width: 420, height: 600 }}
+          defaultSize={{ width: 400, height: 600 }}
           collapsedPreview={params.hasDoors ? 'Doors enabled' : 'Basic config'}
           defaultDocked={true}
           dockedPosition={{ side: 'left', order: 1 }}
@@ -147,7 +146,7 @@ export function App() {
           id="controls"
           title="Controls"
           defaultPosition={{ x: 570, y: 120 }}
-          defaultSize={{ width: 480, height: 850 }}
+          defaultSize={{ width: 450, height: 850 }}
           collapsedPreview="Materials & Dimensions"
           defaultDocked={true}
           dockedPosition={{ side: 'right', order: 0 }}
@@ -159,7 +158,7 @@ export function App() {
           id="export"
           title="Export"
           defaultPosition={{ x: 50, y: 500 }}
-          defaultSize={{ width: 420, height: 350 }}
+          defaultSize={{ width: 400, height: 350 }}
           collapsedPreview="PDF Export"
           defaultDocked={true}
           dockedPosition={{ side: 'right', order: 1 }}
