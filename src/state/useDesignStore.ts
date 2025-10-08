@@ -284,6 +284,9 @@ export const useDesignStore = create<DesignStore>()(
           selectedPartId: null,
           hoveredPartId: null,
         });
+        // Update local input state in ControlsPanel
+        const event = new CustomEvent('design-reset');
+        window.dispatchEvent(event);
       },
       
       exportDesign: () => {

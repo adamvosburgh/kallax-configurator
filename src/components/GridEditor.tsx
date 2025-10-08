@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { MergeSpec } from '../geometry/types';
 import { MAX_GRID_SIZE } from '../geometry/constants';
@@ -31,6 +31,16 @@ export function GridEditor() {
   // Local state for input fields to allow empty strings
   const [rowsInput, setRowsInput] = useState(String(params.rows));
   const [colsInput, setColsInput] = useState(String(params.cols));
+
+  // Listen for reset events to update local input state
+  useEffect(() => {
+    const handleReset = () => {
+      setRowsInput('2');
+      setColsInput('2');
+    };
+    window.addEventListener('design-reset', handleReset);
+    return () => window.removeEventListener('design-reset', handleReset);
+  }, []);
 
   // Check if a cell is part of a merge
   const getCellMerge = (row: number, col: number): { merge: MergeSpec; index: number } | null => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { NominalThickness } from '../geometry/types';
 import { createThicknessMap, THICKNESS_MAP } from '../geometry/constants';
@@ -44,6 +44,16 @@ export function ControlsPanel() {
 
   const nominalOptions: NominalThickness[] = ['1/4"', '1/2"', '3/4"'];
   const frameOptions: NominalThickness[] = ['1/2"', '3/4"']; // No 1/4" for frame
+
+  // Listen for reset events to update local input state
+  useEffect(() => {
+    const handleReset = () => {
+      setInteriorClearanceInput('13.25');
+      setDepthInput('15.375');
+    };
+    window.addEventListener('design-reset', handleReset);
+    return () => window.removeEventListener('design-reset', handleReset);
+  }, []);
 
   const handleInfoHover = (text: string, event: React.MouseEvent) => {
     setHoveredInfo(text);
