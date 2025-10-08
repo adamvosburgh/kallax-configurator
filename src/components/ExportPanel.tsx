@@ -46,7 +46,8 @@ export function ExportPanel() {
   const handleExportPDF = async () => {
     setIsGenerating(true);
     try {
-      const pdfBytes = await generatePDFBooklet(analysis.parts, params);
+      const title = projectName.trim() || 'Custom Modular Shelving';
+      const pdfBytes = await generatePDFBooklet(analysis.parts, params, title);
       downloadPDF(pdfBytes, `kallax-instructions-${getFilenameSuffix()}.pdf`);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
