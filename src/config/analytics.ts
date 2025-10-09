@@ -1,14 +1,12 @@
-// Google Sheets API configuration for design data collection
-// This API key is referrer-restricted to https://adamvosburgh.github.io/kallax-configurator/*
-// It only has access to the Google Sheets API and cannot be used elsewhere
+// Firebase configuration for design data collection
+// Config values are stored in .env.local (not tracked in git)
+// Firestore security rules restrict writes to your domain
 
-export const ANALYTICS_CONFIG = {
-  // Replace with your referrer-restricted API key
-  GOOGLE_SHEETS_API_KEY: 'AIzaSyDOIJO72BU9wh1ZSW6Ptr7ekcedmugrpE8',
-
-  // Google Sheet ID for storing design exports
-  SHEET_ID: '1FmFjfF_fJTdrznsp9ihoNSDZOIfWJdjWNp_HgJjzfRw',
-
-  // Sheet tab name (default is "Sheet1")
-  SHEET_NAME: 'Sheet1',
+export const FIREBASE_CONFIG = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };

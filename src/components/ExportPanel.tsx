@@ -4,7 +4,7 @@ import { useDesignStore } from '../state/useDesignStore';
 import { generatePDFBooklet } from '../geometry/pdfBooklet';
 import { formatDimensions } from '../geometry/format';
 import { downloadJSON, downloadCSV, downloadPDF } from '../lib/download';
-import { logDesignExport } from '../lib/sheetsLogger';
+import { logDesignExport } from '../lib/firebaseLogger';
 
 export function ExportPanel() {
   const { params, analysis, dimensions } = useDesignStore();
@@ -51,10 +51,8 @@ export function ExportPanel() {
       const pdfBytes = await generatePDFBooklet(analysis.parts, params, title);
       downloadPDF(pdfBytes, `kallax-instructions-${getFilenameSuffix()}.pdf`);
 
-      // Log design export to Google Sheets (async, non-blocking)
-      logDesignExport(params, dimensions, analysis).catch(err => {
-        console.error('Failed to log design export:', err);
-      });
+      // Log design export to Firebase (async, non-blocking, silent)
+      logDesignExport(params, dimensions, analysis);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');
