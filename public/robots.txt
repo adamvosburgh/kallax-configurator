@@ -1,0 +1,30 @@
+# Kallax Configurator - robots.txt
+
+# Allow general search engine indexing
+User-agent: *
+Allow: /
+
+# Disallow aggressive email/content scrapers
+User-agent: EmailCollector
+Disallow: /
+
+User-agent: EmailSiphon
+Disallow: /
+
+User-agent: EmailWolf
+Disallow: /
+
+User-agent: ExtractorPro
+Disallow: /
+
+User-agent: CherryPicker
+Disallow: /
+
+User-agent: WebBandit
+Disallow: /
+
+User-agent: WebEmailExtract
+Disallow: /
+
+# Standard sitemap location
+Sitemap: https://adamvosburgh.github.io/kallax-configurator/sitemap.xml
