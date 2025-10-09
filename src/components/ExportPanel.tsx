@@ -4,9 +4,10 @@ import { useDesignStore } from '../state/useDesignStore';
 import { generatePDFBooklet } from '../geometry/pdfBooklet';
 import { formatDimensions } from '../geometry/format';
 import { downloadJSON, downloadCSV, downloadPDF } from '../lib/download';
+import { logDesignExport } from '../lib/sheetsLogger';
 
 export function ExportPanel() {
-  const { params, analysis } = useDesignStore();
+  const { params, analysis, dimensions } = useDesignStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [projectName, setProjectName] = useState('');
 
@@ -49,6 +50,11 @@ export function ExportPanel() {
       const title = projectName.trim() || 'Custom Modular Shelving';
       const pdfBytes = await generatePDFBooklet(analysis.parts, params, title);
       downloadPDF(pdfBytes, `kallax-instructions-${getFilenameSuffix()}.pdf`);
+
+      // Log design export to Google Sheets (async, non-blocking)
+      logDesignExport(params, dimensions, analysis).catch(err => {
+        console.error('Failed to log design export:', err);
+      });
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');
