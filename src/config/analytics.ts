@@ -1,12 +1,12 @@
 // Firebase configuration for design data collection
-// Config values are stored in .env.local (not tracked in git)
-// Firestore security rules restrict writes to your domain
+// This config is public and safe to commit - security is handled by Firestore rules
+// Firestore rules restrict writes to prevent abuse
 
 export const FIREBASE_CONFIG = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  apiKey: 'AIzaSyCbWh35V99fTNN2TOji_qzz3jb_EZcxEPg',
+  authDomain: 'kallaxconfigurator-3dc56.firebaseapp.com',
+  projectId: 'kallaxconfigurator-3dc56',
+  storageBucket: 'kallaxconfigurator-3dc56.firebasestorage.app',
+  messagingSenderId: '222246358357',
+  appId: '1:222246358357:web:de73610d160310c8d7f3dc',
 };
