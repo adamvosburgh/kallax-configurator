@@ -58,7 +58,7 @@ export function App() {
           </div>
 
           {/* Unit System Toggle - Centered */}
-          <div className="flex gap-1">
+          <div className="unit-toggle-container">
             <button
               onClick={() => setUnitSystem('imperial')}
               className={`btn btn-sm ${params.unitSystem === 'imperial' ? 'btn-info' : 'btn-secondary'}`}

@@ -39,11 +39,26 @@ export function useMobileAwarePosition(
   // Adjust position
   useEffect(() => {
     if (isMobile) {
-      // Mobile: center horizontally, fixed vertical position
+      // Mobile: center horizontally, position below touch point
       const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Position below the touch point with offset
+      let y = position.y + 60; // Position below finger (60px offset)
+
+      // If it would go below viewport, position above instead
+      if (y + cardHeight > viewportHeight - 20) {
+        y = position.y - cardHeight - 20;
+      }
+
+      // Ensure it's not too close to top (account for header + panels)
+      if (y < 140) {
+        y = 140;
+      }
+
       setAdjustedPosition({
         x: viewportWidth / 2 - cardWidth / 2,
-        y: mobileTopOffset
+        y: y
       });
     } else {
       // Desktop: offset from cursor with viewport bounds checking

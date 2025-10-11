@@ -221,7 +221,7 @@ body {
    ===================== */
 .hover-card {
   position: absolute;
-  z-index: 50;
+  z-index: 2000;
   pointer-events: none;
   border-radius: 0.5rem;
   background-color: white;
@@ -236,9 +236,34 @@ body {
   position: fixed;
   left: 50% !important;
   transform: translateX(-50%);
-  max-width: 90vw;
+  max-width: min(280px, 80vw);
+  width: min(280px, 80vw);
   box-shadow: 0 20px 40px -10px rgb(0 0 0 / 0.3);
   border: 2px solid #3b82f6;
+  padding: 0.5rem;
+}
+
+/* =====================
+   HEADER UNIT TOGGLE
+   ===================== */
+.unit-toggle-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .unit-toggle-container {
+    flex-direction: row;
+  }
+}
+
+/* Make unit toggle buttons smaller on mobile */
+@media (max-width: 639px) {
+  .unit-toggle-container .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+  }
 }
 
 /* =====================
