@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { FIREBASE_CONFIG } from '../config/analytics';
-import type { DesignParams, DerivedDimensions } from '../geometry/types';
+import type { DesignParams, DerivedDimensions, Material } from '../geometry/types';
+import { isImperialMaterial, isMetricMaterial } from '../geometry/types';
 import type { DesignAnalysis } from '../geometry/estimate';
 
 // Initialize Firebase (only once)
@@ -16,8 +17,20 @@ function initializeFirebase() {
   return db;
 }
 
+/**
+ * Helper to format material thickness for logging
+ */
+function formatMaterialForLogging(material: Material): string {
+  if (isImperialMaterial(material)) {
+    return material.nominal;
+  } else {
+    return `${material.thicknessMm}mm`;
+  }
+}
+
 interface DesignExportData {
   timestamp: Date;
+  unitSystem: string;
   rows: number;
   cols: number;
   interiorClearance: number;
@@ -64,16 +77,17 @@ export async function logDesignExport(
     // Prepare document data
     const docData: DesignExportData = {
       timestamp: new Date(),
+      unitSystem: params.unitSystem,
       rows: params.rows,
       cols: params.cols,
-      interiorClearance: params.interiorClearanceInches,
-      depth: params.depthInches,
+      interiorClearance: params.interiorClearance,
+      depth: params.depth,
       hasBack: params.hasBack,
       hasDoors: params.hasDoors,
       doorMode: params.doorMode.type,
-      frameThickness: params.materials.frame.nominal,
-      backThickness: params.materials.back?.nominal || 'N/A',
-      doorThickness: params.materials.door?.nominal || 'N/A',
+      frameThickness: formatMaterialForLogging(params.materials.frame),
+      backThickness: params.materials.back ? formatMaterialForLogging(params.materials.back) : 'N/A',
+      doorThickness: params.materials.door ? formatMaterialForLogging(params.materials.door) : 'N/A',
       mergeCount: params.merges.length,
       colorScheme: params.colorScheme,
       extWidth: dimensions.extWidth,

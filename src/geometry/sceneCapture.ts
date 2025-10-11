@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { DesignParams, Part } from './types';
+import { getThicknessInInches } from './types';
 import { generateParts } from './parts';
 import { calculateAllDimensions } from './measurements';
 import {
@@ -37,11 +38,33 @@ function createPartMesh(part: Part, params: DesignParams, dimensions: { extWidth
   const lineSegments = new THREE.LineSegments(edges, lineMaterial);
   
   const mesh = new THREE.Mesh(geometry, material);
-  
+
   // Position the mesh
-  const frameThickness = params.materials.frame.actualInches;
+  const frameThickness = getThicknessInInches(params.materials.frame);
+
+  // Convert to inches for calculations
+  const interiorClearanceInches = params.unitSystem === 'metric'
+    ? params.interiorClearance / 25.4
+    : params.interiorClearance;
+  const depthInches = params.unitSystem === 'metric'
+    ? params.depth / 25.4
+    : params.depth;
+  const revealInches = params.unitSystem === 'metric'
+    ? params.doorMode.reveal / 25.4
+    : params.doorMode.reveal;
+  const overlayInches = params.unitSystem === 'metric'
+    ? params.doorMode.overlay / 25.4
+    : params.doorMode.overlay;
+
+  // Create converted door mode for position calculations
+  const doorModeInches = {
+    type: params.doorMode.type,
+    revealInches,
+    overlayInches,
+  };
+
   let position: [number, number, number] = [0, 0, 0];
-  
+
   switch (part.role) {
     case 'Bottom':
       position = calculateBottomPosition(dimensions.extHeight, frameThickness);
@@ -65,7 +88,7 @@ function createPartMesh(part: Part, params: DesignParams, dimensions: { extWidth
           part.bay,
           params.rows,
           params.cols,
-          params.interiorClearanceInches,
+          interiorClearanceInches,
           frameThickness,
           dimensions.extWidth,
           dimensions.extHeight
@@ -74,18 +97,18 @@ function createPartMesh(part: Part, params: DesignParams, dimensions: { extWidth
       break;
     case 'Door':
       if (part.bay) {
-        const doorThickness = params.materials.door?.actualInches || 0.75;
+        const doorThickness = params.materials.door ? getThicknessInInches(params.materials.door) : 0.75;
         position = calculateDoorPosition(
           part.bay,
           params.rows,
           params.cols,
-          params.interiorClearanceInches,
+          interiorClearanceInches,
           frameThickness,
           dimensions.extWidth,
           dimensions.extHeight,
-          params.doorMode,
+          doorModeInches,
           doorThickness,
-          params.depthInches
+          depthInches
         );
       }
       break;
@@ -100,7 +123,7 @@ function createPartMesh(part: Part, params: DesignParams, dimensions: { extWidth
           part.lengthIn,
           params.cols,
           params.rows,
-          params.interiorClearanceInches,
+          interiorClearanceInches,
           frameThickness,
           dimensions.extWidth,
           dimensions.extHeight
@@ -112,7 +135,7 @@ function createPartMesh(part: Part, params: DesignParams, dimensions: { extWidth
         position = calculateVerticalDividerPosition(
           columnIndex,
           params.cols,
-          params.interiorClearanceInches,
+          interiorClearanceInches,
           frameThickness,
           dimensions.extWidth
         );
@@ -172,10 +195,11 @@ export async function captureAxonometricView(
   
   // Create camera with long lens to minimize distortion
   const camera = new THREE.PerspectiveCamera(15, width / height, 0.1, 1000);
-  
+
   // Position camera mostly from front, slightly to the left
   // This gives a view of the left side with symmetrical top/bottom perspective
-  const distance = Math.max(dimensions.extWidth, dimensions.extHeight, dimensions.extDepth) * 0.1 * 4;
+  // Increased distance multiplier from 4 to 4.5 to zoom out slightly and prevent bottom cutoff
+  const distance = Math.max(dimensions.extWidth, dimensions.extHeight, dimensions.extDepth) * 0.1 * 4.5;
   camera.position.set(-distance * 0.3, distance * 0.15, distance);
   camera.lookAt(0, 0, 0);
   

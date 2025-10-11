@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DesignParams, MergeSpec, ThicknessMap, DerivedDimensions, DoorHardwarePosition, DoorHardwareType } from '../geometry/types';
-import { DEFAULT_DESIGN, RECOMMENDED_MATERIALS } from '../geometry/constants';
+import type { DesignParams, MergeSpec, Material, DerivedDimensions, DoorHardwarePosition, DoorHardwareType, UnitSystem } from '../geometry/types';
+import { DEFAULT_DESIGN, DEFAULT_DESIGN_IMPERIAL, DEFAULT_DESIGN_METRIC, RECOMMENDED_MATERIALS_IMPERIAL, RECOMMENDED_MATERIALS_METRIC } from '../geometry/constants';
 import type { DesignAnalysis } from '../geometry/estimate';
 import { analyzeDesign } from '../geometry/estimate';
 import { calculateAllDimensions } from '../geometry/measurements';
@@ -9,43 +9,44 @@ import { calculateAllDimensions } from '../geometry/measurements';
 interface DesignStore {
   // Core design parameters
   params: DesignParams;
-  
+
   // Derived data (computed from params)
   analysis: DesignAnalysis;
   dimensions: DerivedDimensions;
-  
+
   // UI state
   selectedPartId: string | null;
   hoveredPartId: string | null;
   _hasHydrated: boolean;
-  
+
   // Actions
   updateParams: (updates: Partial<DesignParams>) => void;
   setRows: (rows: number) => void;
   setCols: (cols: number) => void;
-  setInteriorClearance: (inches: number) => void;
-  setDepth: (inches: number) => void;
+  setInteriorClearance: (value: number) => void;
+  setDepth: (value: number) => void;
+  setUnitSystem: (unitSystem: UnitSystem) => void;
   setHasBack: (hasBack: boolean) => void;
   setHasDoors: (hasDoors: boolean) => void;
   setDoorMode: (type: 'inset' | 'overlay') => void;
-  setDoorReveal: (inches: number) => void;
-  setDoorOverlay: (inches: number) => void;
+  setDoorReveal: (value: number) => void;
+  setDoorOverlay: (value: number) => void;
   setDoorHardwarePosition: (position: DoorHardwarePosition) => void;
   setDoorHardwareType: (type: DoorHardwareType) => void;
-  setDoorHardwareInset: (inches: number) => void;
+  setDoorHardwareInset: (value: number) => void;
 
   // Material thickness actions
-  setFrameThickness: (thickness: ThicknessMap) => void;
-  setBackThickness: (thickness: ThicknessMap) => void;
-  setDoorThickness: (thickness: ThicknessMap) => void;
+  setFrameThickness: (thickness: Material) => void;
+  setBackThickness: (thickness: Material) => void;
+  setDoorThickness: (thickness: Material) => void;
   useRecommendedMaterials: () => void;
-  
+
   // Merge actions
   addMerge: (merge: MergeSpec) => void;
   removeMerge: (index: number) => void;
   clearMerges: () => void;
   toggleCellMerge: (row: number, col: number) => void;
-  
+
   // UI actions
   setSelectedPartId: (id: string | null) => void;
   setHoveredPartId: (id: string | null) => void;
@@ -97,20 +98,83 @@ export const useDesignStore = create<DesignStore>()(
         get().updateParams({ cols: Math.max(1, Math.min(10, cols)) });
       },
       
-      setInteriorClearance: (inches) => {
-        get().updateParams({ interiorClearanceInches: Math.max(1, inches) });
+      setInteriorClearance: (value) => {
+        get().updateParams({ interiorClearance: Math.max(1, value) });
       },
-      
-      setDepth: (inches) => {
-        get().updateParams({ depthInches: Math.max(1, inches) });
+
+      setDepth: (value) => {
+        get().updateParams({ depth: Math.max(1, value) });
       },
-      
+
+      setUnitSystem: (unitSystem) => {
+        const currentParams = get().params;
+
+        // If switching to the same unit system, do nothing
+        if (currentParams.unitSystem === unitSystem) {
+          return;
+        }
+
+        // Convert values when switching unit systems
+        const MM_TO_INCHES = 1 / 25.4;
+        const INCHES_TO_MM = 25.4;
+
+        const newInteriorClearance = unitSystem === 'metric'
+          ? Math.round(currentParams.interiorClearance * INCHES_TO_MM)
+          : Math.round(currentParams.interiorClearance * MM_TO_INCHES * 16) / 16; // Round to nearest 1/16"
+
+        const newDepth = unitSystem === 'metric'
+          ? Math.round(currentParams.depth * INCHES_TO_MM)
+          : Math.round(currentParams.depth * MM_TO_INCHES * 16) / 16;
+
+        const newReveal = unitSystem === 'metric'
+          ? Math.round(currentParams.doorMode.reveal * INCHES_TO_MM)
+          : Math.round(currentParams.doorMode.reveal * MM_TO_INCHES * 16) / 16;
+
+        const newOverlay = unitSystem === 'metric'
+          ? Math.round(currentParams.doorMode.overlay * INCHES_TO_MM)
+          : Math.round(currentParams.doorMode.overlay * MM_TO_INCHES * 16) / 16;
+
+        const newHardwareInset = currentParams.doorHardware
+          ? (unitSystem === 'metric'
+              ? Math.round(currentParams.doorHardware.inset * INCHES_TO_MM)
+              : Math.round(currentParams.doorHardware.inset * MM_TO_INCHES * 16) / 16)
+          : undefined;
+
+        // Use recommended materials for the new unit system
+        const newMaterials = unitSystem === 'metric'
+          ? RECOMMENDED_MATERIALS_METRIC
+          : RECOMMENDED_MATERIALS_IMPERIAL;
+
+        get().updateParams({
+          unitSystem,
+          interiorClearance: newInteriorClearance,
+          depth: newDepth,
+          doorMode: {
+            ...currentParams.doorMode,
+            reveal: newReveal,
+            overlay: newOverlay,
+          },
+          doorHardware: currentParams.doorHardware ? {
+            ...currentParams.doorHardware,
+            inset: newHardwareInset!,
+          } : undefined,
+          materials: {
+            frame: newMaterials.frame,
+            back: currentParams.hasBack ? newMaterials.back : undefined,
+            door: currentParams.hasDoors ? newMaterials.door : undefined,
+          },
+        });
+      },
+
       setHasBack: (hasBack) => {
         const updates: Partial<DesignParams> = { hasBack };
         if (hasBack && !get().params.materials.back) {
+          const recommendedMaterials = get().params.unitSystem === 'metric'
+            ? RECOMMENDED_MATERIALS_METRIC
+            : RECOMMENDED_MATERIALS_IMPERIAL;
           updates.materials = {
             ...get().params.materials,
-            back: RECOMMENDED_MATERIALS.back,
+            back: recommendedMaterials.back,
           };
         }
         get().updateParams(updates);
@@ -119,16 +183,20 @@ export const useDesignStore = create<DesignStore>()(
       setHasDoors: (hasDoors) => {
         const updates: Partial<DesignParams> = { hasDoors };
         if (hasDoors && !get().params.materials.door) {
+          const recommendedMaterials = get().params.unitSystem === 'metric'
+            ? RECOMMENDED_MATERIALS_METRIC
+            : RECOMMENDED_MATERIALS_IMPERIAL;
           updates.materials = {
             ...get().params.materials,
-            door: RECOMMENDED_MATERIALS.door,
+            door: recommendedMaterials.door,
           };
         }
         if (hasDoors && !get().params.doorHardware) {
+          const defaultInset = get().params.unitSystem === 'metric' ? 25 : 1;
           updates.doorHardware = {
             position: 'top-center',
             type: 'pull-hole',
-            insetInches: 1,
+            inset: defaultInset,
           };
         }
         get().updateParams(updates);
@@ -140,23 +208,24 @@ export const useDesignStore = create<DesignStore>()(
         });
       },
       
-      setDoorReveal: (inches) => {
+      setDoorReveal: (value) => {
         get().updateParams({
-          doorMode: { ...get().params.doorMode, revealInches: inches },
+          doorMode: { ...get().params.doorMode, reveal: value },
         });
       },
-      
-      setDoorOverlay: (inches) => {
+
+      setDoorOverlay: (value) => {
         get().updateParams({
-          doorMode: { ...get().params.doorMode, overlayInches: inches },
+          doorMode: { ...get().params.doorMode, overlay: value },
         });
       },
 
       setDoorHardwarePosition: (position) => {
+        const defaultInset = get().params.unitSystem === 'metric' ? 25 : 1;
         const currentHardware = get().params.doorHardware || {
           position: 'top-center',
           type: 'pull-hole',
-          insetInches: 1,
+          inset: defaultInset,
         };
         get().updateParams({
           doorHardware: { ...currentHardware, position },
@@ -164,24 +233,26 @@ export const useDesignStore = create<DesignStore>()(
       },
 
       setDoorHardwareType: (type) => {
+        const defaultInset = get().params.unitSystem === 'metric' ? 25 : 1;
         const currentHardware = get().params.doorHardware || {
           position: 'top-center',
           type: 'pull-hole',
-          insetInches: 1,
+          inset: defaultInset,
         };
         get().updateParams({
           doorHardware: { ...currentHardware, type },
         });
       },
 
-      setDoorHardwareInset: (inches) => {
+      setDoorHardwareInset: (value) => {
+        const defaultInset = get().params.unitSystem === 'metric' ? 25 : 1;
         const currentHardware = get().params.doorHardware || {
           position: 'top-center',
           type: 'pull-hole',
-          insetInches: 1,
+          inset: defaultInset,
         };
         get().updateParams({
-          doorHardware: { ...currentHardware, insetInches: inches },
+          doorHardware: { ...currentHardware, inset: value },
         });
       },
 
@@ -214,11 +285,14 @@ export const useDesignStore = create<DesignStore>()(
       },
       
       useRecommendedMaterials: () => {
+        const recommendedMaterials = get().params.unitSystem === 'metric'
+          ? RECOMMENDED_MATERIALS_METRIC
+          : RECOMMENDED_MATERIALS_IMPERIAL;
         get().updateParams({
           materials: {
-            frame: RECOMMENDED_MATERIALS.frame,
-            back: RECOMMENDED_MATERIALS.back,
-            door: RECOMMENDED_MATERIALS.door,
+            frame: recommendedMaterials.frame,
+            back: recommendedMaterials.back,
+            door: recommendedMaterials.door,
           },
         });
       },
@@ -277,9 +351,15 @@ export const useDesignStore = create<DesignStore>()(
 
       // Utility actions
       reset: () => {
-        const derived = computeDerivedData(DEFAULT_DESIGN);
+        // Use the appropriate default based on current unit system
+        const currentUnitSystem = get().params.unitSystem;
+        const defaultDesign = currentUnitSystem === 'metric'
+          ? DEFAULT_DESIGN_METRIC
+          : DEFAULT_DESIGN_IMPERIAL;
+
+        const derived = computeDerivedData(defaultDesign);
         set({
-          params: DEFAULT_DESIGN,
+          params: defaultDesign,
           ...derived,
           selectedPartId: null,
           hoveredPartId: null,

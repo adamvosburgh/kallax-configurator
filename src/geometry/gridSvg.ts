@@ -4,6 +4,7 @@
  */
 
 import type { DesignParams, MergeSpec } from './types';
+import { getThicknessInInches } from './types';
 
 const CELL_SIZE = 40;
 const STROKE_WIDTH = 1;
@@ -103,23 +104,24 @@ export function generateGridSvg(params: DesignParams): string {
  */
 export function generateTestGridSvg(): string {
   const testParams: DesignParams = {
+    unitSystem: 'imperial',
     rows: 3,
     cols: 4,
     merges: [
       { r0: 0, c0: 0, r1: 0, c1: 1 }, // 2×1 horizontal merge
       { r0: 1, c0: 2, r1: 2, c1: 2 }, // 1×2 vertical merge
     ],
-    interiorClearanceInches: 13.25,
-    depthInches: 15.375,
+    interiorClearance: 13.25,
+    depth: 15.375,
     hasBack: false,
     hasDoors: false,
-    doorMode: { type: 'inset' },
+    doorMode: { type: 'inset', reveal: 0.0625, overlay: 0.25 },
     materials: {
       frame: { nominal: '3/4"', actualInches: 0.75 },
     },
     colorScheme: 'blues',
     opacity: 1.0,
   };
-  
+
   return generateGridSvg(testParams);
 }

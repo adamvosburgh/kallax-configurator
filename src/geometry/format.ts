@@ -5,18 +5,18 @@
 export function toFraction32(valueInches: number): string {
   const wholeInches = Math.floor(valueInches);
   const fractionalPart = valueInches - wholeInches;
-  
+
   // Round to nearest 1/32"
   const thirtySeconds = Math.round(fractionalPart * 32);
-  
+
   if (thirtySeconds === 0) {
     return `${wholeInches}"`;
   }
-  
+
   if (thirtySeconds === 32) {
     return `${wholeInches + 1}"`;
   }
-  
+
   // Simplify the fraction
   const gcd = (a: number, b: number): number => {
     a = Math.abs(a);
@@ -31,18 +31,44 @@ export function toFraction32(valueInches: number): string {
   const divisor = gcd(thirtySeconds, 32);
   const numerator = thirtySeconds / divisor;
   const denominator = 32 / divisor;
-  
+
   if (wholeInches === 0) {
     return `${numerator}/${denominator}"`;
   }
-  
+
   return `${wholeInches} ${numerator}/${denominator}"`;
 }
 
 /**
- * Format dimensions as L×W×T with fractions
+ * Convert inches to mm and format
+ * e.g., 28.65625 inches -> "728mm"
+ */
+export function toMm(valueInches: number): string {
+  const mm = Math.round(valueInches * 25.4);
+  return `${mm}mm`;
+}
+
+/**
+ * Format dimension based on unit system
+ */
+export function formatDimension(valueInches: number, unitSystem: 'imperial' | 'metric'): string {
+  return unitSystem === 'metric' ? toMm(valueInches) : toFraction32(valueInches);
+}
+
+/**
+ * Format dimensions as L×W×T with fractions (imperial only, for backwards compatibility)
  */
 export function formatDimensions(length: number, width: number, thickness: number): string {
+  return `${toFraction32(length)} × ${toFraction32(width)} × ${toFraction32(thickness)}`;
+}
+
+/**
+ * Format dimensions as L×W×T based on unit system
+ */
+export function formatDimensionsWithUnit(length: number, width: number, thickness: number, unitSystem: 'imperial' | 'metric'): string {
+  if (unitSystem === 'metric') {
+    return `${Math.round(length * 25.4)}mm × ${Math.round(width * 25.4)}mm × ${Math.round(thickness * 25.4)}mm`;
+  }
   return `${toFraction32(length)} × ${toFraction32(width)} × ${toFraction32(thickness)}`;
 }
 

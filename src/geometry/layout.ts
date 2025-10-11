@@ -1,4 +1,5 @@
 import type { DesignParams, MergeSpec, LayoutInfo, VerticalSegment, ExtendedShelf } from './types';
+import { getThicknessInInches } from './types';
 import { calculateSideHeight } from './measurements';
 
 /**
@@ -185,7 +186,7 @@ function calculateVerticalSegments(
   merges: MergeSpec[], 
   presentVerticals: Set<number>,
   frameThickness: number,
-  interiorClearanceInches: number
+  interiorClearance: number
 ): VerticalSegment[] {
   const segments: VerticalSegment[] = [];
   
@@ -200,7 +201,7 @@ function calculateVerticalSegments(
     if (crossingMerges.length === 0) {
       // No horizontal merges cross this column - full height divider
       const fullHeight = calculateSideHeight(
-        rows * interiorClearanceInches + (rows + 1) * frameThickness,
+        rows * interiorClearance + (rows + 1) * frameThickness,
         frameThickness
       );
       segments.push({
@@ -223,7 +224,7 @@ function calculateVerticalSegments(
       for (let r = 0; r <= rows; r++) {
         if (mergeRows.has(r) || r === rows) {
           if (r > segmentStart) {
-            const segmentHeight = (r - segmentStart) * interiorClearanceInches + 
+            const segmentHeight = (r - segmentStart) * interiorClearance +
                                  (r - segmentStart - 1) * frameThickness;
             if (segmentHeight > 0) {
               segments.push({
@@ -249,20 +250,23 @@ function calculateVerticalSegments(
 export function calculateLayout(params: DesignParams): LayoutInfo {
   const presentVerticals = calculatePresentVerticals(params.rows, params.cols, params.merges);
   const horizontalSegments = calculateHorizontalSegments(
-    params.rows, 
+    params.rows,
     params.cols,
-    params.merges, 
+    params.merges,
     presentVerticals
   );
-  
-  const frameThickness = params.materials.frame.actualInches;
+
+  const frameThickness = getThicknessInInches(params.materials.frame);
+  // Convert to inches for calculations
+  const interiorClearanceInches = params.unitSystem === 'metric' ? params.interiorClearance / 25.4 : params.interiorClearance;
+
   const verticalSegments = calculateVerticalSegments(
     params.rows,
     params.cols,
     params.merges,
     presentVerticals,
     frameThickness,
-    params.interiorClearanceInches
+    interiorClearanceInches
   );
   
   const extendedShelves: ExtendedShelf[] = [];

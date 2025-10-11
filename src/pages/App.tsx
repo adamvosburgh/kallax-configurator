@@ -11,8 +11,10 @@ import { useDesignStore } from '../state/useDesignStore';
 
 export function App() {
   const store = useDesignStore();
-  const { importDesign, _hasHydrated, params } = store;
+  const { importDesign, _hasHydrated, params, setUnitSystem } = store;
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [showMetricTooltip, setShowMetricTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // Handle first-time users and ensure hydration is complete
   useEffect(() => {
@@ -54,7 +56,47 @@ export function App() {
           <div>
             <h1 className="text-lg font-mono font-semibold text-black">Kallax Configurator</h1>
           </div>
+
+          {/* Unit System Toggle - Centered */}
+          <div className="flex gap-1">
+            <button
+              onClick={() => setUnitSystem('imperial')}
+              className={`btn btn-sm ${params.unitSystem === 'imperial' ? 'btn-info' : 'btn-secondary'}`}
+            >
+              Imperial
+            </button>
+            <button
+              onClick={() => setUnitSystem('metric')}
+              className={`btn btn-sm ${params.unitSystem === 'metric' ? 'btn-info' : 'btn-secondary'}`}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltipPosition({ x: rect.left, y: rect.bottom + 8 });
+                setShowMetricTooltip(true);
+              }}
+              onMouseLeave={() => setShowMetricTooltip(false)}
+            >
+              ⚠️ Metric
+            </button>
+          </div>
+
+          {/* Metric Tooltip */}
+          {showMetricTooltip && (
+            <div
+              className="hover-card"
+              style={{
+                left: tooltipPosition.x,
+                top: tooltipPosition.y,
+                maxWidth: '300px',
+              }}
+            >
+              <div className="text-xs text-gray-800">
+                <strong>Note:</strong> I have not personally built a shelving unit with metric sheet goods. Exercise caution, and please let me know if you run into errors.
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
+            <span className="text-gray-400">•</span>
             <a
               onClick={(e) => {
                 e.preventDefault();
