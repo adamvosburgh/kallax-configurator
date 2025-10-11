@@ -390,6 +390,15 @@ export const useDesignStore = create<DesignStore>()(
     }),
     {
       name: 'kallax-design-storage',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        // If stored version doesn't match current, clear storage
+        if (version !== 2) {
+          console.log('Clearing outdated localStorage due to version mismatch');
+          return undefined;
+        }
+        return persistedState;
+      },
       partialize: (state) => ({ params: state.params }),
       onRehydrateStorage: () => {
         return (state, error) => {
