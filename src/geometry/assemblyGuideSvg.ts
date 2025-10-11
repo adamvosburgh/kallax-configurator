@@ -1,6 +1,7 @@
 import type { Part, DesignParams } from './types';
+import { getThicknessInInches } from './types';
 import { calculateLayout } from './layout';
-import { toFraction32 } from './format';
+import { formatDimension } from './format';
 
 /**
  * Information about where parts intersect with other parts
@@ -28,11 +29,11 @@ export function calculateIntersections(
   const layout = calculateLayout(params);
   const intersectionMap = new Map<IntersectionInfo['partId'], IntersectionInfo>();
 
-  const frameThickness = params.materials.frame.actualInches;
-  const interiorClearance = params.interiorClearanceInches;
+  const frameThickness = getThicknessInInches(params.materials.frame);
+  const interiorClearanceInches = params.unitSystem === 'metric' ? params.interiorClearance / 25.4 : params.interiorClearance;
 
   // Module width (interior + one frame thickness)
-  const moduleWidth = interiorClearance + frameThickness;
+  const moduleWidth = interiorClearanceInches + frameThickness;
 
   // Get frame parts only (exclude doors and back)
   const frameParts = parts.filter(p =>
@@ -51,8 +52,8 @@ export function calculateIntersections(
       if (col === 0 || col === params.cols) continue; // Skip sides
 
       // Position from left edge to centerline of divider
-      // = frameThickness (left side) + col * (interiorClearance + frameThickness) + frameThickness/2 (to center of divider)
-      const position = frameThickness + col * (interiorClearance + frameThickness) - frameThickness / 2;
+      // = frameThickness (left side) + col * (interiorClearanceInches + frameThickness) + frameThickness/2 (to center of divider)
+      const position = frameThickness + col * (interiorClearanceInches + frameThickness) - frameThickness / 2;
       intersections.push({ position, label: `VDiv-${col}` });
     }
 
@@ -94,8 +95,8 @@ export function calculateIntersections(
       if (segment.colStart === 0 || segment.colEnd === params.cols) {
         // Position from top edge of the side piece to center of shelf
         // Side piece starts at frameThickness below the top
-        // Shelf is at: segment.row * (interiorClearance + frameThickness) - frameThickness/2
-        const position = segment.row * (interiorClearance + frameThickness) - frameThickness / 2;
+        // Shelf is at: segment.row * (interiorClearanceInches + frameThickness) - frameThickness/2
+        const position = segment.row * (interiorClearanceInches + frameThickness) - frameThickness / 2;
         intersections.push({
           position,
           label: `Bay-${segment.row}-Col${segment.colStart}to${segment.colEnd}`
@@ -136,7 +137,7 @@ export function calculateIntersections(
       if (segment.colStart <= col && segment.colEnd >= col &&
           segment.row >= rowStart && segment.row <= rowEnd) {
         // Position from top of this vertical segment to centerline of shelf
-        const position = (segment.row - rowStart) * (interiorClearance + frameThickness) - frameThickness / 2;
+        const position = (segment.row - rowStart) * (interiorClearanceInches + frameThickness) - frameThickness / 2;
         intersections.push({
           position,
           label: `Bay-${segment.row}-Col${segment.colStart}to${segment.colEnd}`
@@ -182,7 +183,7 @@ export function calculateIntersections(
         if (hasVerticalAtRow) {
           // Position from left edge of shelf to centerline of vertical divider
           // Distance from shelfColStart to col
-          const position = (col - shelfColStart) * (interiorClearance + frameThickness) - frameThickness / 2;
+          const position = (col - shelfColStart) * (interiorClearanceInches + frameThickness) - frameThickness / 2;
           intersections.push({ position, label: `VDiv-${col}` });
         }
       }
@@ -209,7 +210,8 @@ export function calculateIntersections(
  */
 export function generatePartAssemblySvg(
   info: IntersectionInfo,
-  scale: number = 1
+  scale: number = 1,
+  unitSystem: 'imperial' | 'metric' = 'imperial'
 ): string {
   const { partId, lengthIn, widthIn, intersections } = info;
 
@@ -251,13 +253,13 @@ export function generatePartAssemblySvg(
     // Length dimension (top)
     svg += `<text x="${svgWidth / 2}" y="${topMargin - 5}" `;
     svg += `font-family="monospace" font-size="10" fill="#6b7280" text-anchor="middle">`;
-    svg += `${toFraction32(lengthIn)} × ${toFraction32(widthIn)}`;
+    svg += `${formatDimension(lengthIn, unitSystem)} × ${formatDimension(widthIn, unitSystem)}`;
     svg += `</text>`;
   } else {
     // Vertical piece
     svg += `<text x="${svgWidth / 2}" y="${topMargin - 5}" `;
     svg += `font-family="monospace" font-size="10" fill="#6b7280" text-anchor="middle">`;
-    svg += `${toFraction32(widthIn)} × ${toFraction32(lengthIn)}`;
+    svg += `${formatDimension(widthIn, unitSystem)} × ${formatDimension(lengthIn, unitSystem)}`;
     svg += `</text>`;
   }
 
@@ -312,7 +314,7 @@ export function generatePartAssemblySvg(
         const distance = i < intersections.length
           ? intersections[i].position - prevPosition
           : lengthIn - prevPosition;
-        const dimText = toFraction32(distance);
+        const dimText = formatDimension(distance, unitSystem);
         svg += `<text x="${(dimStart + dimEnd) / 2}" y="${dimY - 5}" `;
         svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="middle">`;
         svg += dimText;
@@ -371,7 +373,7 @@ export function generatePartAssemblySvg(
         const distance = i < intersections.length
           ? intersections[i].position - prevPosition
           : lengthIn - prevPosition;
-        const dimText = toFraction32(distance);
+        const dimText = formatDimension(distance, unitSystem);
         svg += `<text x="${dimX + 5}" y="${(dimStart + dimEnd) / 2 + 3}" `;
         svg += `font-family="monospace" font-size="9" fill="#059669" text-anchor="start">`;
         svg += dimText;
@@ -423,7 +425,7 @@ export function generateAllAssemblyGuideSvgs(
       };
     }
 
-    const svg = generatePartAssemblySvg(info, baseScale);
+    const svg = generatePartAssemblySvg(info, baseScale, params.unitSystem);
     results.push({
       role: part.role,
       partId: part.id,

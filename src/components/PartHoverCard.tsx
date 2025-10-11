@@ -1,6 +1,7 @@
 import type { Part } from '../geometry/types';
-import { formatDimensions } from '../geometry/format';
+import { formatDimensionsWithUnit } from '../geometry/format';
 import { useMobileAwarePosition } from '../lib/useMobileAwarePosition';
+import { useDesignStore } from '../state/useDesignStore';
 
 interface PartHoverCardProps {
   part: Part;
@@ -8,6 +9,7 @@ interface PartHoverCardProps {
 }
 
 export function PartHoverCard({ part, position }: PartHoverCardProps) {
+  const { params } = useDesignStore();
   const { adjustedPosition, isMobile } = useMobileAwarePosition(position, {
     cardWidth: 200,
     cardHeight: 120,
@@ -24,7 +26,7 @@ export function PartHoverCard({ part, position }: PartHoverCardProps) {
     >
       <div className="text-mono text-xs font-semibold text-black">{part.id}</div>
       <div className="mt-2 space-y-0.5">
-        <div className="text-mono text-xs text-black">{formatDimensions(part.lengthIn, part.widthIn, part.thicknessIn)}</div>
+        <div className="text-mono text-xs text-black">{formatDimensionsWithUnit(part.lengthIn, part.widthIn, part.thicknessIn, params.unitSystem)}</div>
         {part.qty > 1 && <div className="text-mono text-xs text-gray-600">Qty: {part.qty}</div>}
       </div>
       {part.notes && (

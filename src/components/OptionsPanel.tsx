@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { DoorHardwarePosition } from '../geometry/types';
 
@@ -16,15 +16,22 @@ export function OptionsPanel() {
   } = useDesignStore();
 
   const doorHardware = params.doorHardware || {
-    position: 'top-center',
-    type: 'pull-hole',
-    insetInches: 1,
+    position: 'top-center' as DoorHardwarePosition,
+    type: 'pull-hole' as const,
+    inset: 1,
   };
 
   // Local state for input fields to allow empty strings
-  const [revealInput, setRevealInput] = useState(String(params.doorMode.revealInches || 0.0625));
-  const [overlayInput, setOverlayInput] = useState(String(params.doorMode.overlayInches || 0.25));
-  const [hardwareInsetInput, setHardwareInsetInput] = useState(String(doorHardware.insetInches));
+  const [revealInput, setRevealInput] = useState(String(params.doorMode.reveal || 0.0625));
+  const [overlayInput, setOverlayInput] = useState(String(params.doorMode.overlay || 0.25));
+  const [hardwareInsetInput, setHardwareInsetInput] = useState(String(doorHardware.inset));
+
+  // Sync local state when params change (e.g., unit system switch)
+  useEffect(() => {
+    setRevealInput(String(params.doorMode.reveal || 0.0625));
+    setOverlayInput(String(params.doorMode.overlay || 0.25));
+    setHardwareInsetInput(String(doorHardware.inset));
+  }, [params.doorMode.reveal, params.doorMode.overlay, doorHardware.inset]);
 
   const handlePositionClick = (position: DoorHardwarePosition) => {
     setDoorHardwarePosition(position);
@@ -76,11 +83,11 @@ export function OptionsPanel() {
             {params.doorMode.type === 'inset' && (
               <div className="field-group">
                 <label className="form-label">
-                  Reveal (inches)
+                  Reveal ({params.unitSystem === 'metric' ? 'mm' : 'inches'})
                 </label>
                 <input
                   type="number"
-                  step="0.0625"
+                  step={params.unitSystem === 'metric' ? '1' : '0.0625'}
                   value={revealInput}
                   onChange={(e) => {
                     setRevealInput(e.target.value);
@@ -91,9 +98,11 @@ export function OptionsPanel() {
                   }}
                   onBlur={() => {
                     const val = parseFloat(revealInput);
+                    const defaultValue = params.unitSystem === 'metric' ? 2 : 0.0625;
+                    const defaultString = params.unitSystem === 'metric' ? '2' : '0.0625';
                     if (isNaN(val) || val < 0 || revealInput === '') {
-                      setDoorReveal(0.0625);
-                      setRevealInput('0.0625');
+                      setDoorReveal(defaultValue);
+                      setRevealInput(defaultString);
                     }
                   }}
                   className="input-field"
@@ -104,11 +113,11 @@ export function OptionsPanel() {
             {params.doorMode.type === 'overlay' && (
               <div className="field-group">
                 <label className="form-label">
-                  Overlay (inches)
+                  Overlay ({params.unitSystem === 'metric' ? 'mm' : 'inches'})
                 </label>
                 <input
                   type="number"
-                  step="0.125"
+                  step={params.unitSystem === 'metric' ? '1' : '0.125'}
                   value={overlayInput}
                   onChange={(e) => {
                     setOverlayInput(e.target.value);
@@ -119,9 +128,11 @@ export function OptionsPanel() {
                   }}
                   onBlur={() => {
                     const val = parseFloat(overlayInput);
+                    const defaultValue = params.unitSystem === 'metric' ? 6 : 0.25;
+                    const defaultString = params.unitSystem === 'metric' ? '6' : '0.25';
                     if (isNaN(val) || val < 0 || overlayInput === '') {
-                      setDoorOverlay(0.25);
-                      setOverlayInput('0.25');
+                      setDoorOverlay(defaultValue);
+                      setOverlayInput(defaultString);
                     }
                   }}
                   className="input-field"
@@ -139,24 +150,24 @@ export function OptionsPanel() {
                   onClick={() => setDoorHardwareType('drill-guide')}
                   className={`btn btn-sm flex-1 ${doorHardware.type === 'drill-guide' ? 'btn-info' : 'btn-secondary'}`}
                 >
-                  Drill Guide (1/8")
+                  {params.unitSystem === 'metric' ? 'Drill Guide (3mm)' : 'Drill Guide (1/8")'}
                 </button>
                 <button
                   onClick={() => setDoorHardwareType('pull-hole')}
                   className={`btn btn-sm flex-1 ${doorHardware.type === 'pull-hole' ? 'btn-info' : 'btn-secondary'}`}
                 >
-                  Pull Hole (1")
+                  {params.unitSystem === 'metric' ? 'Pull Hole (25mm)' : 'Pull Hole (1")'}
                 </button>
               </div>
             </div>
 
             <div className="field-group">
               <label className="form-label">
-                Inset from Edge (inches)
+                Inset from Edge ({params.unitSystem === 'metric' ? 'mm' : 'inches'})
               </label>
               <input
                 type="number"
-                step="0.125"
+                step={params.unitSystem === 'metric' ? '1' : '0.125'}
                 value={hardwareInsetInput}
                 onChange={(e) => {
                   setHardwareInsetInput(e.target.value);
@@ -167,9 +178,11 @@ export function OptionsPanel() {
                 }}
                 onBlur={() => {
                   const val = parseFloat(hardwareInsetInput);
+                  const defaultValue = params.unitSystem === 'metric' ? 25 : 1;
+                  const defaultString = params.unitSystem === 'metric' ? '25' : '1';
                   if (isNaN(val) || val < 0 || hardwareInsetInput === '') {
-                    setDoorHardwareInset(1);
-                    setHardwareInsetInput('1');
+                    setDoorHardwareInset(defaultValue);
+                    setHardwareInsetInput(defaultString);
                   }
                 }}
                 className="input-field"

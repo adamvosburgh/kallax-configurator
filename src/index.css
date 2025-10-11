@@ -314,6 +314,17 @@ body {
   border-color: #4b5563;
 }
 
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #d1d5db;
+  border-color: #9ca3af;
+}
+
 .btn-sm {
   padding: 0.375rem 0.625rem;
   font-size: 0.75rem;

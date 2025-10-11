@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useDesignStore } from '../state/useDesignStore';
 import type { Part } from '../geometry/types';
+import { getThicknessInInches } from '../geometry/types';
 import { PartHoverCard } from './PartHoverCard';
 import { MergeTargetOverlay } from './MergeTargetOverlay';
 import {
@@ -102,7 +103,9 @@ function PartMesh({ part, position, onHover }: PartMeshProps) {
   const getHardwarePosition = (): [number, number, number] | null => {
     if (part.role !== 'Door' || !params.doorHardware) return null;
 
-    const { position: hwPosition, insetInches } = params.doorHardware;
+    const { position: hwPosition, inset: insetValue } = params.doorHardware;
+    // Convert to inches if metric, then to scene units
+    const insetInches = params.unitSystem === 'metric' ? insetValue / 25.4 : insetValue;
     const inset = insetInches * 0.1; // Convert to scene units
 
     // Door dimensions in scene units
@@ -199,8 +202,29 @@ function Scene() {
   
   // Position parts in 3D space
   const getPartPosition = (part: Part): [number, number, number] => {
-    const frameThickness = params.materials.frame.actualInches;
-    
+    const frameThickness = getThicknessInInches(params.materials.frame);
+
+    // Convert to inches for calculations
+    const interiorClearanceInches = params.unitSystem === 'metric'
+      ? params.interiorClearance / 25.4
+      : params.interiorClearance;
+    const depthInches = params.unitSystem === 'metric'
+      ? params.depth / 25.4
+      : params.depth;
+    const revealInches = params.unitSystem === 'metric'
+      ? params.doorMode.reveal / 25.4
+      : params.doorMode.reveal;
+    const overlayInches = params.unitSystem === 'metric'
+      ? params.doorMode.overlay / 25.4
+      : params.doorMode.overlay;
+
+    // Create converted door mode for position calculations
+    const doorModeInches = {
+      type: params.doorMode.type,
+      revealInches,
+      overlayInches,
+    };
+
     switch (part.role) {
       case 'Bottom':
         return calculateBottomPosition(dimensions.extHeight, frameThickness);
@@ -220,7 +244,7 @@ function Scene() {
             part.bay,
             params.rows,
             params.cols,
-            params.interiorClearanceInches,
+            interiorClearanceInches,
             frameThickness,
             dimensions.extWidth,
             dimensions.extHeight
@@ -229,18 +253,18 @@ function Scene() {
         return [0, 0, 0];
       case 'Door':
         if (part.bay) {
-          const doorThickness = params.materials.door?.actualInches || 0.75;
+          const doorThickness = params.materials.door ? getThicknessInInches(params.materials.door) : 0.75;
           return calculateDoorPosition(
             part.bay,
             params.rows,
             params.cols,
-            params.interiorClearanceInches,
+            interiorClearanceInches,
             frameThickness,
             dimensions.extWidth,
             dimensions.extHeight,
-            params.doorMode,
+            doorModeInches,
             doorThickness,
-            params.depthInches
+            depthInches
           );
         }
         return [0, 0, 0];
@@ -255,7 +279,7 @@ function Scene() {
             part.lengthIn,
             params.cols,
             params.rows,
-            params.interiorClearanceInches,
+            interiorClearanceInches,
             frameThickness,
             dimensions.extWidth,
             dimensions.extHeight
@@ -267,7 +291,7 @@ function Scene() {
           return calculateVerticalDividerPosition(
             columnIndex,
             params.cols,
-            params.interiorClearanceInches,
+            interiorClearanceInches,
             frameThickness,
             dimensions.extWidth
           );

@@ -3,6 +3,7 @@ import { calculateLayout } from './layout';
 import { calculateAllDimensions } from './measurements';
 import { DEFAULT_DESIGN } from './constants';
 import type { DesignParams } from './types';
+import { getThicknessInInches } from './types';
 
 describe('Layout Calculation', () => {
   it('should calculate correct layout for 2x2 with no merges', () => {
@@ -74,7 +75,7 @@ describe('Layout Calculation', () => {
     };
     
     const dims = calculateAllDimensions(params);
-    const backThickness = params.materials.back?.actualInches || 0;
+    const backThickness = params.materials.back ? getThicknessInInches(params.materials.back) : 0;
     
     expect(dims.extDepth).toBeCloseTo(15.375 + backThickness, 4);
   });

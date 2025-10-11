@@ -5,6 +5,7 @@
 
 import type { SheetLayout, OversizedPart } from './ripGenerator';
 import type { DesignParams } from './types';
+import { getThicknessInInches } from './types';
 
 // SVG dimensions and styling - tight around content
 const MARGIN = 40; // Minimal margin
@@ -134,7 +135,10 @@ export function generateSheetSvg(sheet: SheetLayout, params: DesignParams): stri
 
     // Add door hardware circle if this is a door part
     if (part.originalPart && part.originalPart.role === 'Door' && params.doorHardware) {
-      const { position: hwPosition, type, insetInches } = params.doorHardware;
+      const { position: hwPosition, type, inset } = params.doorHardware;
+
+      // Convert inset to inches if in metric mode
+      const insetInches = params.unitSystem === 'metric' ? inset / 25.4 : inset;
 
       // Calculate hardware position relative to part rectangle
       let hardwareX = 0;
@@ -302,7 +306,10 @@ export function generateOversizedPartSvg(oversizedPart: OversizedPart, params: D
 
   // Add door hardware circle if this is a door part
   if (part.role === 'Door' && params.doorHardware) {
-    const { position: hwPosition, type, insetInches } = params.doorHardware;
+    const { position: hwPosition, type, inset } = params.doorHardware;
+
+    // Convert inset to inches if in metric mode
+    const insetInches = params.unitSystem === 'metric' ? inset / 25.4 : inset;
 
     // Calculate hardware position relative to part rectangle
     let hardwareX = 0;

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import type { NominalThickness } from '../geometry/types';
-import { createThicknessMap, THICKNESS_MAP } from '../geometry/constants';
-import { toFraction32 } from '../geometry/format';
+import { createThicknessMap, THICKNESS_MAP, createMetricThickness } from '../geometry/constants';
+import { formatDimension } from '../geometry/format';
 import { useMobileAwarePosition } from '../lib/useMobileAwarePosition';
+import { isImperialMaterial, isMetricMaterial } from '../geometry/types';
 
 // Info text for tooltips
 const INFO_TEXT = {
@@ -39,21 +40,27 @@ export function ControlsPanel() {
   });
 
   // Local state for input fields to allow empty strings
-  const [interiorClearanceInput, setInteriorClearanceInput] = useState(String(params.interiorClearanceInches));
-  const [depthInput, setDepthInput] = useState(String(params.depthInches));
+  const [interiorClearanceInput, setInteriorClearanceInput] = useState(String(params.interiorClearance));
+  const [depthInput, setDepthInput] = useState(String(params.depth));
 
   const nominalOptions: NominalThickness[] = ['1/4"', '1/2"', '3/4"'];
   const frameOptions: NominalThickness[] = ['1/2"', '3/4"']; // No 1/4" for frame
 
+  // Sync local state when params change (e.g., unit system switch)
+  useEffect(() => {
+    setInteriorClearanceInput(String(params.interiorClearance));
+    setDepthInput(String(params.depth));
+  }, [params.interiorClearance, params.depth]);
+
   // Listen for reset events to update local input state
   useEffect(() => {
     const handleReset = () => {
-      setInteriorClearanceInput('13.25');
-      setDepthInput('15.375');
+      setInteriorClearanceInput(String(params.interiorClearance));
+      setDepthInput(String(params.depth));
     };
     window.addEventListener('design-reset', handleReset);
     return () => window.removeEventListener('design-reset', handleReset);
-  }, []);
+  }, [params.interiorClearance, params.depth]);
 
   const handleInfoHover = (text: string, event: React.MouseEvent) => {
     setHoveredInfo(text);
@@ -84,7 +91,7 @@ export function ControlsPanel() {
         <div className="space-y-3">
           <div className="field-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Interior Clearance (inches)
+              {params.unitSystem === 'metric' ? 'Interior Clearance (mm)' : 'Interior Clearance (inches)'}
               <span
                 className="cursor-help"
                 style={{ fontSize: '14px' }}
@@ -97,7 +104,7 @@ export function ControlsPanel() {
             </label>
             <input
               type="number"
-              step="0.125"
+              step={params.unitSystem === 'metric' ? '1' : '0.125'}
               value={interiorClearanceInput}
               onChange={(e) => {
                 setInteriorClearanceInput(e.target.value);
@@ -108,9 +115,10 @@ export function ControlsPanel() {
               }}
               onBlur={() => {
                 const val = parseFloat(interiorClearanceInput);
+                const defaultValue = params.unitSystem === 'metric' ? 335 : 13.25;
                 if (isNaN(val) || val <= 0 || interiorClearanceInput === '') {
-                  setInteriorClearance(13.25);
-                  setInteriorClearanceInput('13.25');
+                  setInteriorClearance(defaultValue);
+                  setInteriorClearanceInput(String(defaultValue));
                 }
               }}
               className="input-field"
@@ -118,7 +126,7 @@ export function ControlsPanel() {
           </div>
           <div className="field-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Depth (inches)
+              {params.unitSystem === 'metric' ? 'Depth (mm)' : 'Depth (inches)'}
               <span
                 className="cursor-help"
                 style={{ fontSize: '14px' }}
@@ -131,7 +139,7 @@ export function ControlsPanel() {
             </label>
             <input
               type="number"
-              step="0.125"
+              step={params.unitSystem === 'metric' ? '1' : '0.125'}
               value={depthInput}
               onChange={(e) => {
                 setDepthInput(e.target.value);
@@ -142,9 +150,10 @@ export function ControlsPanel() {
               }}
               onBlur={() => {
                 const val = parseFloat(depthInput);
+                const defaultValue = params.unitSystem === 'metric' ? 390 : 15.375;
                 if (isNaN(val) || val <= 0 || depthInput === '') {
-                  setDepth(15.375);
-                  setDepthInput('15.375');
+                  setDepth(defaultValue);
+                  setDepthInput(String(defaultValue));
                 }
               }}
               className="input-field"
@@ -171,7 +180,7 @@ export function ControlsPanel() {
           {/* Frame Material */}
           <div className="field-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Frame Thickness (nominal / actual)
+              {params.unitSystem === 'metric' ? 'Frame Thickness (mm)' : 'Frame Thickness (nominal / actual)'}
               <span
                 className="cursor-help"
                 style={{ fontSize: '14px' }}
@@ -182,35 +191,49 @@ export function ControlsPanel() {
                 ℹ️
               </span>
             </label>
-            <div className="field-row-split">
-              <select
-                value={params.materials.frame.nominal}
-                onChange={(e) => setFrameThickness(createThicknessMap(e.target.value as NominalThickness))}
-                className="select-field"
-              >
-                {frameOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+            {params.unitSystem === 'metric' ? (
               <input
                 type="number"
-                step="0.001"
-                value={params.materials.frame.actualInches}
-                onChange={(e) => setFrameThickness({
-                  ...params.materials.frame,
-                  actualInches: parseFloat(e.target.value) || THICKNESS_MAP[params.materials.frame.nominal]
-                })}
+                step="1"
+                value={isMetricMaterial(params.materials.frame) ? params.materials.frame.thicknessMm : 18}
+                onChange={(e) => setFrameThickness(createMetricThickness(parseFloat(e.target.value) || 18))}
                 className="input-field"
-                style={{ maxWidth: '5rem' }}
               />
-            </div>
+            ) : (
+              <div className="field-row-split">
+                <select
+                  value={isImperialMaterial(params.materials.frame) ? params.materials.frame.nominal : '3/4"'}
+                  onChange={(e) => setFrameThickness(createThicknessMap(e.target.value as NominalThickness))}
+                  className="select-field"
+                >
+                  {frameOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="0.001"
+                  value={isImperialMaterial(params.materials.frame) ? params.materials.frame.actualInches : 0.75}
+                  onChange={(e) => {
+                    if (isImperialMaterial(params.materials.frame)) {
+                      setFrameThickness({
+                        ...params.materials.frame,
+                        actualInches: parseFloat(e.target.value) || THICKNESS_MAP[params.materials.frame.nominal]
+                      });
+                    }
+                  }}
+                  className="input-field"
+                  style={{ maxWidth: '5rem' }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Back Material */}
           {params.hasBack && (
             <div className="field-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Back Thickness (nominal / actual)
+                {params.unitSystem === 'metric' ? 'Back Thickness (mm)' : 'Back Thickness (nominal / actual)'}
                 <span
                   className="cursor-help"
                   style={{ fontSize: '14px' }}
@@ -221,28 +244,42 @@ export function ControlsPanel() {
                   ℹ️
                 </span>
               </label>
-              <div className="field-row-split">
-                <select
-                  value={params.materials.back?.nominal || '1/4"'}
-                  onChange={(e) => setBackThickness(createThicknessMap(e.target.value as NominalThickness))}
-                  className="select-field"
-                >
-                  {nominalOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+              {params.unitSystem === 'metric' ? (
                 <input
                   type="number"
-                  step="0.001"
-                  value={params.materials.back?.actualInches || THICKNESS_MAP['1/4"']}
-                  onChange={(e) => setBackThickness({
-                    nominal: params.materials.back?.nominal || '1/4"',
-                    actualInches: parseFloat(e.target.value) || THICKNESS_MAP['1/4"']
-                  })}
+                  step="1"
+                  value={params.materials.back && isMetricMaterial(params.materials.back) ? params.materials.back.thicknessMm : 6}
+                  onChange={(e) => setBackThickness(createMetricThickness(parseFloat(e.target.value) || 6))}
                   className="input-field"
-                  style={{ maxWidth: '5rem' }}
                 />
-              </div>
+              ) : (
+                <div className="field-row-split">
+                  <select
+                    value={params.materials.back && isImperialMaterial(params.materials.back) ? params.materials.back.nominal : '1/4"'}
+                    onChange={(e) => setBackThickness(createThicknessMap(e.target.value as NominalThickness))}
+                    className="select-field"
+                  >
+                    {nominalOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    step="0.001"
+                    value={params.materials.back && isImperialMaterial(params.materials.back) ? params.materials.back.actualInches : THICKNESS_MAP['1/4"']}
+                    onChange={(e) => {
+                      if (params.materials.back && isImperialMaterial(params.materials.back)) {
+                        setBackThickness({
+                          nominal: params.materials.back.nominal,
+                          actualInches: parseFloat(e.target.value) || THICKNESS_MAP['1/4"']
+                        });
+                      }
+                    }}
+                    className="input-field"
+                    style={{ maxWidth: '5rem' }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -250,7 +287,7 @@ export function ControlsPanel() {
           {params.hasDoors && (
             <div className="field-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Door Thickness (nominal / actual)
+                {params.unitSystem === 'metric' ? 'Door Thickness (mm)' : 'Door Thickness (nominal / actual)'}
                 <span
                   className="cursor-help"
                   style={{ fontSize: '14px' }}
@@ -261,28 +298,42 @@ export function ControlsPanel() {
                   ℹ️
                 </span>
               </label>
-              <div className="field-row-split">
-                <select
-                  value={params.materials.door?.nominal || '3/4"'}
-                  onChange={(e) => setDoorThickness(createThicknessMap(e.target.value as NominalThickness))}
-                  className="select-field"
-                >
-                  {nominalOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+              {params.unitSystem === 'metric' ? (
                 <input
                   type="number"
-                  step="0.001"
-                  value={params.materials.door?.actualInches || THICKNESS_MAP['3/4"']}
-                  onChange={(e) => setDoorThickness({
-                    nominal: params.materials.door?.nominal || '3/4"',
-                    actualInches: parseFloat(e.target.value) || THICKNESS_MAP['3/4"']
-                  })}
+                  step="1"
+                  value={params.materials.door && isMetricMaterial(params.materials.door) ? params.materials.door.thicknessMm : 18}
+                  onChange={(e) => setDoorThickness(createMetricThickness(parseFloat(e.target.value) || 18))}
                   className="input-field"
-                  style={{ maxWidth: '5rem' }}
                 />
-              </div>
+              ) : (
+                <div className="field-row-split">
+                  <select
+                    value={params.materials.door && isImperialMaterial(params.materials.door) ? params.materials.door.nominal : '3/4"'}
+                    onChange={(e) => setDoorThickness(createThicknessMap(e.target.value as NominalThickness))}
+                    className="select-field"
+                  >
+                    {nominalOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    step="0.001"
+                    value={params.materials.door && isImperialMaterial(params.materials.door) ? params.materials.door.actualInches : THICKNESS_MAP['3/4"']}
+                    onChange={(e) => {
+                      if (params.materials.door && isImperialMaterial(params.materials.door)) {
+                        setDoorThickness({
+                          nominal: params.materials.door.nominal,
+                          actualInches: parseFloat(e.target.value) || THICKNESS_MAP['3/4"']
+                        });
+                      }
+                    }}
+                    className="input-field"
+                    style={{ maxWidth: '5rem' }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -296,15 +347,15 @@ export function ControlsPanel() {
         <div className="info-box space-y-1">
           <div className="info-row">
             <span className="info-label">Width:</span>
-            <span className="info-value">{toFraction32(dimensions.extWidth)}</span>
+            <span className="info-value">{formatDimension(dimensions.extWidth, params.unitSystem)}</span>
           </div>
           <div className="info-row">
             <span className="info-label">Height:</span>
-            <span className="info-value">{toFraction32(dimensions.extHeight)}</span>
+            <span className="info-value">{formatDimension(dimensions.extHeight, params.unitSystem)}</span>
           </div>
           <div className="info-row">
             <span className="info-label">Depth:</span>
-            <span className="info-value">{toFraction32(dimensions.extDepth)}</span>
+            <span className="info-value">{formatDimension(dimensions.extDepth, params.unitSystem)}</span>
           </div>
         </div>
       </div>
@@ -315,18 +366,30 @@ export function ControlsPanel() {
         <div className="info-box space-y-1">
           <div className="info-row">
             <span className="info-label">Frame:</span>
-            <span className="info-value">{analysis.estimate.frameBoardFeet.toFixed(1)} bd ft</span>
+            <span className="info-value">
+              {params.unitSystem === 'metric'
+                ? `${(analysis.estimate.frameBoardFeet * 0.002359737).toFixed(3)} m³`
+                : `${analysis.estimate.frameBoardFeet.toFixed(1)} bd ft`}
+            </span>
           </div>
           {analysis.estimate.hasBack && (
             <div className="info-row">
               <span className="info-label">Back:</span>
-              <span className="info-value">{analysis.estimate.backSquareFeet.toFixed(1)} sq ft</span>
+              <span className="info-value">
+                {params.unitSystem === 'metric'
+                  ? `${(analysis.estimate.backSquareFeet * 0.09290304).toFixed(2)} m²`
+                  : `${analysis.estimate.backSquareFeet.toFixed(1)} sq ft`}
+              </span>
             </div>
           )}
           {analysis.estimate.totalDoors > 0 && (
             <div className="info-row">
               <span className="info-label">Doors:</span>
-              <span className="info-value">{analysis.estimate.doorSquareFeet.toFixed(1)} sq ft</span>
+              <span className="info-value">
+                {params.unitSystem === 'metric'
+                  ? `${(analysis.estimate.doorSquareFeet * 0.09290304).toFixed(2)} m²`
+                  : `${analysis.estimate.doorSquareFeet.toFixed(1)} sq ft`}
+              </span>
             </div>
           )}
           <div className="divider" style={{ margin: '0.5rem 0' }} />

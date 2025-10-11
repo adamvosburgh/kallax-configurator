@@ -1,4 +1,5 @@
 import type { DesignParams, Part } from './types';
+import { getThicknessInInches } from './types';
 import { calculateLayout } from './layout';
 import { calculateAllDimensions } from './measurements';
 import { calculateBayWidth as calculateBayWidthFromMeasurements, calculateSideHeight } from './measurements';
@@ -76,17 +77,24 @@ export function generateParts(params: DesignParams): Part[] {
   
   const {
     cols: _cols,
-    interiorClearanceInches,
-    depthInches,
+    interiorClearance,
+    depth,
     hasBack,
     hasDoors,
     doorMode,
     materials,
+    unitSystem,
   } = params;
-  
-  const frameThickness = materials.frame.actualInches;
-  const backThickness = materials.back?.actualInches || 0;
-  const doorThickness = materials.door?.actualInches || 0;
+
+  // Convert to inches for calculations
+  const interiorClearanceInches = unitSystem === 'metric' ? interiorClearance / 25.4 : interiorClearance;
+  const depthInches = unitSystem === 'metric' ? depth / 25.4 : depth;
+  const revealInches = unitSystem === 'metric' ? doorMode.reveal / 25.4 : doorMode.reveal;
+  const overlayInches = unitSystem === 'metric' ? doorMode.overlay / 25.4 : doorMode.overlay;
+
+  const frameThickness = getThicknessInInches(materials.frame);
+  const backThickness = materials.back ? getThicknessInInches(materials.back) : 0;
+  const doorThickness = materials.door ? getThicknessInInches(materials.door) : 0;
 
   // Top and Bottom pieces
   parts.push({
@@ -202,15 +210,13 @@ export function generateParts(params: DesignParams): Part[] {
       let doorNotes: string;
       
       if (doorMode.type === 'inset') {
-        const reveal = doorMode.revealInches || 1/16;
-        doorWidth = openingWidth - 2 * reveal;
-        doorHeight = openingHeight - 2 * reveal;
-        doorNotes = `Inset door with ${reveal}" reveal`;
+        doorWidth = openingWidth - 2 * revealInches;
+        doorHeight = openingHeight - 2 * revealInches;
+        doorNotes = `Inset door with ${revealInches}" reveal`;
       } else {
-        const overlay = doorMode.overlayInches || 0.25;
-        doorWidth = openingWidth + 2 * overlay;
-        doorHeight = openingHeight + 2 * overlay;
-        doorNotes = `Overlay door with ${overlay}" overlay`;
+        doorWidth = openingWidth + 2 * overlayInches;
+        doorHeight = openingHeight + 2 * overlayInches;
+        doorNotes = `Overlay door with ${overlayInches}" overlay`;
       }
       
       parts.push({

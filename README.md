@@ -4,6 +4,14 @@
 
 Design your own modular shelving system – inspired by IKEA’s Kallax, but made for DIYers.
 
+## Update 10/11/2025
+- Metric support! Involved a large refactor of the codebase, with an app-wide toggle. Default variables for each system.
+- All UI components also reflect metric dimensions
+- Due to variation in metric sheet good sizing, thicknesses are input fields instead of drop downs. Nominal/actual is not used given different manufacturing process of metric sheet goods.
+- All guideline and warning tooltips and messages remain in imperial, given that that is my only experience in buidling these
+- PDF booklet also uses imperial / metric depending on toggle.
+- Booklet rip generator uses 1200mm x 2400mm assumption for sheet good sizing, and 2cm for margin between cuts 
+
 ## About
 
 I built this tool after moving into a new apartment and needing new furniture – entry cabinets, media consoles, nightstands, a mix of open and closed storage. I wanted to upgrade from my previous IKEA pieces – mainly in material – while keeping their functionality, modularity, and affordability. The IKEA kallax module worked well here, with the added bonus of also being compatible with the cheap accesories sold at IKEA. I built this furniture using an elaborate block system in rhino, and afterwards decided to open-source the schematic part of that for the community via this web app. You can see some pictures of the furniture I built in src/assets/example. It's not perfect, mainly because of my incredibly lean setup and the realities of building 13 pieces in a NYC apartment, but the measurements work well at least.

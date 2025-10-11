@@ -1,12 +1,24 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import type { Part, DesignParams } from './types';
-import { toFraction32, formatDimensions } from './format';
+import type { Part, DesignParams, Material } from './types';
+import { getThicknessInInches, isImperialMaterial, isMetricMaterial } from './types';
+import { toFraction32, formatDimensionsWithUnit } from './format';
 import { svgToPng } from '../lib/svgToImage';
 import { generateSheetLayouts } from './ripGenerator';
 import { generateAllSheetSvgs, generateOversizedPartSvgs } from './cutListSvg';
 import { generateAllAssemblyGuideSvgs } from './assemblyGuideSvg';
 import { captureAxonometricView } from './sceneCapture';
 import instructionGuysUrl from '../assets/InstructionGuys.png';
+
+/**
+ * Helper to format material thickness for display
+ */
+function formatMaterialThickness(material: Material, unitSystem: 'imperial' | 'metric'): string {
+  if (isImperialMaterial(material)) {
+    return material.nominal;
+  } else {
+    return `${material.thicknessMm}mm`;
+  }
+}
 
 export async function generatePDFBooklet(
   parts: Part[], 
@@ -318,26 +330,29 @@ export async function generatePDFBooklet(
   });
   configY -= 20;
   
+  const unitLabel = params.unitSystem === 'metric' ? 'mm' : '"';
   const configs = [
     `Grid Layout: ${params.rows} rows × ${params.cols} columns`,
-    `Module Size: ${toFraction32(params.interiorClearanceInches)}"`,
-    `Depth: ${toFraction32(params.depthInches)}"`,
+    `Module Size: ${params.unitSystem === 'metric' ? Math.round(params.interiorClearance) : toFraction32(params.interiorClearance)}${unitLabel}`,
+    `Depth: ${params.unitSystem === 'metric' ? Math.round(params.depth) : toFraction32(params.depth)}${unitLabel}`,
     `Back Panel: ${params.hasBack ? 'Yes' : 'No'}`,
     `Doors: ${params.hasDoors ? 'Yes' : 'No'}`,
-    `Frame Thickness: ${params.materials.frame.nominal}`,
+    `Frame Thickness: ${formatMaterialThickness(params.materials.frame, params.unitSystem)}`,
   ];
-  
+
   if (params.hasBack && params.materials.back) {
-    configs.push(`Back Thickness: ${params.materials.back.nominal}`);
+    configs.push(`Back Thickness: ${formatMaterialThickness(params.materials.back, params.unitSystem)}`);
   }
-  
+
   if (params.hasDoors && params.materials.door) {
-    configs.push(`Door Thickness: ${params.materials.door.nominal}`);
+    configs.push(`Door Thickness: ${formatMaterialThickness(params.materials.door, params.unitSystem)}`);
     configs.push(`Door Style: ${params.doorMode.type}`);
     if (params.doorMode.type === 'inset') {
-      configs.push(`Door Reveal: ${toFraction32(params.doorMode.revealInches || 0.0625)}"`);
+      const revealDisplay = params.unitSystem === 'metric' ? `${Math.round(params.doorMode.reveal)}mm` : `${toFraction32(params.doorMode.reveal)}"`;
+      configs.push(`Door Reveal: ${revealDisplay}`);
     } else {
-      configs.push(`Door Overlay: ${toFraction32(params.doorMode.overlayInches || 0.25)}"`);
+      const overlayDisplay = params.unitSystem === 'metric' ? `${Math.round(params.doorMode.overlay)}mm` : `${toFraction32(params.doorMode.overlay)}"`;
+      configs.push(`Door Overlay: ${overlayDisplay}`);
     }
   }
   
@@ -383,8 +398,8 @@ export async function generatePDFBooklet(
     page3.drawText(part.id, { x: margin, y: configY, size: 8, font: helveticaFont });
     page3.drawText(part.role, { x: margin + 100, y: configY, size: 8, font: helveticaFont });
     page3.drawText(part.qty.toString(), { x: margin + 180, y: configY, size: 8, font: helveticaFont });
-    page3.drawText(formatDimensions(part.lengthIn, part.widthIn, part.thicknessIn), { 
-      x: margin + 210, y: configY, size: 8, font: helveticaFont 
+    page3.drawText(formatDimensionsWithUnit(part.lengthIn, part.widthIn, part.thicknessIn, params.unitSystem), {
+      x: margin + 210, y: configY, size: 8, font: helveticaFont
     });
     
     if (part.notes) {
@@ -418,7 +433,19 @@ export async function generatePDFBooklet(
     color: rgb(0.3, 0.3, 0.3),
   });
   yPos -= 40;
-  
+
+  // Add metric note if in metric mode
+  if (params.unitSystem === 'metric') {
+    page4.drawText('**Note: I have only assembled this using imperial sheet goods, look for best practices with metric.**', {
+      x: margin,
+      y: yPos,
+      size: 10,
+      font: helveticaBoldFont,
+      color: rgb(0, 0, 0),
+    });
+    yPos -= 15;
+  }
+
   // Assembly methods content
   const assemblyText = `For 3/4" plywood modular shelving, consider these assembly methods:
 
@@ -465,7 +492,7 @@ either side will add 1/8" to either side)`
   }
 
   // ===== PAGE 4: Cut List =====
-  const layoutResult = generateSheetLayouts(parts);
+  const layoutResult = generateSheetLayouts(parts, params);
   const sheetSvgs = generateAllSheetSvgs(layoutResult.sheets, params);
   const oversizedSvgs = generateOversizedPartSvgs(layoutResult.oversizedParts, params);
   
@@ -488,7 +515,10 @@ either side will add 1/8" to either side)`
     yPos -= 25;
     
     // Body text with warning combined
-    const bodyText = 'Suggestion for organizing cuts on 4\' x 8\' plywood sheet goods. The packing algorithm used here is very basic, and should be double-checked. I used 24" as a max rip width where possible. Lastly, the packing algorithm puts 1" in between cuts - this is to avoid overpacking sheets, not to actually suggest you should put 1" in between cuts.';
+    const sheetSize = params.unitSystem === 'metric' ? '1200mm x 2400mm' : '4\' x 8\'';
+    const maxRip = params.unitSystem === 'metric' ? '610mm' : '24"';
+    const spacing = params.unitSystem === 'metric' ? '20mm' : '1"';
+    const bodyText = `Suggestion for organizing cuts on ${sheetSize} plywood sheet goods. The packing algorithm used here is very basic, and should be double-checked. I used ${maxRip} as a max rip width where possible. Lastly, the packing algorithm puts ${spacing} in between cuts - this is to avoid overpacking sheets, not to actually suggest you should put ${spacing} in between cuts.`;
     yPos -= 25;
     
     // Wrap body text (handles line breaks)
@@ -625,7 +655,8 @@ either side will add 1/8" to either side)`
     yPos -= 25;
     
     // Explanation text
-    const explanationText = 'The following parts exceed the dimensions of standard 4\' × 8\' plywood sheets and will need to be sourced separately or assembled from multiple pieces:';
+    const sheetDimensions = params.unitSystem === 'metric' ? '1200mm × 2400mm' : '4\' × 8\'';
+    const explanationText = `The following parts exceed the dimensions of standard ${sheetDimensions} plywood sheets and will need to be sourced separately or assembled from multiple pieces:`;
     
     // Wrap explanation text
     const words = explanationText.split(' ');
@@ -752,7 +783,9 @@ either side will add 1/8" to either side)`
       color: rgb(0, 0, 0),
     });
     
-    const dimensionText = `${part.widthIn.toFixed(2)}" × ${part.lengthIn.toFixed(2)}" × ${part.thicknessIn.toFixed(3)}"`;
+    const dimensionText = params.unitSystem === 'metric'
+      ? `${Math.round(part.widthIn * 25.4)}mm × ${Math.round(part.lengthIn * 25.4)}mm × ${Math.round(part.thicknessIn * 25.4)}mm`
+      : `${part.widthIn.toFixed(2)}" × ${part.lengthIn.toFixed(2)}" × ${part.thicknessIn.toFixed(3)}"`;
     const dimensionWidth = helveticaFont.widthOfTextAtSize(dimensionText, 10);
     page.drawText(dimensionText, {
       x: x + (width - dimensionWidth) / 2,

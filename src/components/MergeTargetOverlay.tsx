@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDesignStore } from '../state/useDesignStore';
 import * as THREE from 'three';
+import { getThicknessInInches } from '../geometry/types';
 
 // Interface for potential merge positions
 interface MergeTarget {
@@ -163,9 +164,9 @@ export function MergeTargetOverlay({ enabled }: MergeTargetOverlayProps) {
     if (!enabled) return [];
 
     const targets: MergeTarget[] = [];
-    const frameThickness = params.materials.frame.actualInches;
-    const bayWidth = params.interiorClearanceInches;
-    const bayHeight = params.interiorClearanceInches;
+    const frameThickness = getThicknessInInches(params.materials.frame);
+    const bayWidth = params.interiorClearance;
+    const bayHeight = params.interiorClearance;
 
     // Scale factor to match the 3D parts
     const scale = 0.1;

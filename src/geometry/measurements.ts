@@ -2,9 +2,13 @@
  * Centralized measurements and calculation formulas for the Kallax configurator
  * This file contains all measurement constants and calculation functions
  * Edit this file to adjust measurements used throughout the project
+ *
+ * NOTE: All calculations are performed in inches internally, regardless of unit system.
+ * Metric values are converted to inches before calculations.
  */
 
 import type { DesignParams, DerivedDimensions } from './types';
+import { getThicknessInInches } from './types';
 
 // ============================================================================
 // FIXED MATERIAL CONSTANTS
@@ -16,6 +20,23 @@ export const THICKNESS_MAP = {
   '1/2"': 15/32,  // 0.46875 inches
   '3/4"': 23/32,  // 0.71875 inches
 } as const;
+
+// ============================================================================
+// UNIT CONVERSION HELPERS
+// ============================================================================
+
+const MM_TO_INCHES = 1 / 25.4;
+const INCHES_TO_MM = 25.4;
+
+/** Convert value to inches based on unit system */
+export function toInches(value: number, unitSystem: 'imperial' | 'metric'): number {
+  return unitSystem === 'metric' ? value * MM_TO_INCHES : value;
+}
+
+/** Convert value to mm based on unit system */
+export function toMm(value: number, unitSystem: 'imperial' | 'metric'): number {
+  return unitSystem === 'imperial' ? value * INCHES_TO_MM : value;
+}
 
 // ============================================================================
 // CALCULATION FORMULAS
@@ -58,16 +79,21 @@ export function calculateSideHeight(extHeight: number, frameThickness: number): 
 
 /**
  * Calculate complete derived dimensions from design parameters
+ * All calculations are done in inches internally, then results are returned in inches
  */
 export function calculateAllDimensions(params: DesignParams): DerivedDimensions {
-  const { rows, cols, interiorClearanceInches, depthInches, hasBack, materials } = params;
-  const frameThickness = materials.frame.actualInches;
-  const backThickness = materials.back?.actualInches || 0;
-  
+  const { rows, cols, interiorClearance, depth, hasBack, materials, unitSystem } = params;
+
+  // Convert to inches for internal calculations
+  const interiorClearanceInches = toInches(interiorClearance, unitSystem);
+  const depthInches = toInches(depth, unitSystem);
+  const frameThickness = getThicknessInInches(materials.frame);
+  const backThickness = materials.back ? getThicknessInInches(materials.back) : 0;
+
   const extWidth = calculateExteriorWidth(cols, interiorClearanceInches, frameThickness);
   const extHeight = calculateExteriorHeight(rows, interiorClearanceInches, frameThickness);
   const extDepth = calculateExteriorDepth(depthInches, hasBack, backThickness);
-  
+
   return {
     extWidth,
     extHeight,

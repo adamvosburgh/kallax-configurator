@@ -3,13 +3,26 @@
  * Based on specifications in src/instructions/rip-generator.md
  */
 
-import type { Part } from './types';
+import type { Part, DesignParams } from './types';
 import { toFraction32 } from './format';
 
+// Helper functions to get unit-aware constants
+function getSheetWidth(unitSystem: 'imperial' | 'metric'): number {
+  // 48" for imperial, 1200mm (~47.24") for metric
+  return unitSystem === 'metric' ? 1200 / 25.4 : 48;
+}
+
+function getSheetHeight(unitSystem: 'imperial' | 'metric'): number {
+  // 96" for imperial, 2400mm (~94.49") for metric
+  return unitSystem === 'metric' ? 2400 / 25.4 : 96;
+}
+
+function getCutMargin(unitSystem: 'imperial' | 'metric'): number {
+  // 1" for imperial, 20mm (~0.787") for metric (closest to 1")
+  return unitSystem === 'metric' ? 20 / 25.4 : 1;
+}
+
 // Constants
-const SHEET_WIDTH = 48; // inches
-const SHEET_HEIGHT = 96; // inches  
-const CUT_MARGIN = 1; // inches between cuts
 const MAX_RIP_LENGTH = 24; // threshold for rip orientation decision
 
 export interface PlacedPart {
@@ -55,24 +68,28 @@ interface ProcessedPart extends Part {
 /**
  * Check if a part can fit on a standard 4'×8' sheet
  */
-function canFitOnStandardSheet(part: Part): { fits: boolean; reason?: string } {
+function canFitOnStandardSheet(
+  part: Part,
+  SHEET_WIDTH: number,
+  SHEET_HEIGHT: number
+): { fits: boolean; reason?: string } {
   const length = part.lengthIn;
   const width = part.widthIn;
-  
+
   // Check if either dimension exceeds sheet dimensions
   if (length > SHEET_WIDTH && width > SHEET_HEIGHT) {
-    return { fits: false, reason: `Part dimensions ${length.toFixed(2)}" × ${width.toFixed(2)}" exceed both sheet dimensions (48" × 96")` };
+    return { fits: false, reason: `Part dimensions ${length.toFixed(2)}" × ${width.toFixed(2)}" exceed both sheet dimensions` };
   }
   if (length > SHEET_HEIGHT && width > SHEET_WIDTH) {
     return { fits: false, reason: `Part dimensions ${length.toFixed(2)}" × ${width.toFixed(2)}" exceed sheet dimensions when rotated` };
   }
   if (Math.max(length, width) > SHEET_HEIGHT) {
-    return { fits: false, reason: `Longest dimension ${Math.max(length, width).toFixed(2)}" exceeds sheet length (96")` };
+    return { fits: false, reason: `Longest dimension ${Math.max(length, width).toFixed(2)}" exceeds sheet length` };
   }
   if (Math.min(length, width) > SHEET_WIDTH) {
-    return { fits: false, reason: `Shortest dimension ${Math.min(length, width).toFixed(2)}" exceeds sheet width (48")` };
+    return { fits: false, reason: `Shortest dimension ${Math.min(length, width).toFixed(2)}" exceeds sheet width` };
   }
-  
+
   return { fits: true };
 }
 
@@ -105,7 +122,11 @@ function determineRipOrientation(part: Part): { ripWidth: number; crossCutLength
  * Process parts to determine rip orientations and group by thickness
  * Also separates out parts that don't fit on standard sheets
  */
-function processParts(parts: Part[]): { 
+function processParts(
+  parts: Part[],
+  SHEET_WIDTH: number,
+  SHEET_HEIGHT: number
+): {
   partsByThickness: Map<number, ProcessedPart[]>;
   oversizedParts: OversizedPart[];
 } {
@@ -114,7 +135,7 @@ function processParts(parts: Part[]): {
   
   for (const part of parts) {
     // Check if part fits on standard sheet
-    const fitCheck = canFitOnStandardSheet(part);
+    const fitCheck = canFitOnStandardSheet(part, SHEET_WIDTH, SHEET_HEIGHT);
     if (!fitCheck.fits) {
       oversizedParts.push({
         part,
@@ -143,7 +164,15 @@ function processParts(parts: Part[]): {
 /**
  * Pack parts into a single sheet using first-fit decreasing algorithm
  */
-function packSheet(parts: ProcessedPart[], sheetId: string, thickness: number): SheetLayout {
+function packSheet(
+  parts: ProcessedPart[],
+  sheetId: string,
+  thickness: number,
+  SHEET_WIDTH: number,
+  SHEET_HEIGHT: number,
+  CUT_MARGIN: number,
+  unitSystem: 'imperial' | 'metric'
+): SheetLayout {
   // Sort parts by rip width (primary) then cross-cut length (secondary)
   const sortedParts = [...parts].sort((a, b) => {
     if (a.ripWidth !== b.ripWidth) {
@@ -222,10 +251,13 @@ function packSheet(parts: ProcessedPart[], sheetId: string, thickness: number): 
         strips.push(newStrip);
         
         // Add rip cut
+        const label = unitSystem === 'metric'
+          ? `${Math.round(part.ripWidth * 25.4)}mm`
+          : toFraction32(part.ripWidth);
         ripCuts.push({
           position: currentX,
           width: part.ripWidth,
-          label: toFraction32(part.ripWidth),
+          label,
         });
         
         currentX += part.ripWidth + CUT_MARGIN;
@@ -256,8 +288,12 @@ function packSheet(parts: ProcessedPart[], sheetId: string, thickness: number): 
 /**
  * Generate optimized sheet layouts for all parts
  */
-export function generateSheetLayouts(parts: Part[]): SheetLayoutResult {
-  const { partsByThickness, oversizedParts } = processParts(parts);
+export function generateSheetLayouts(parts: Part[], params: DesignParams): SheetLayoutResult {
+  const SHEET_WIDTH = getSheetWidth(params.unitSystem);
+  const SHEET_HEIGHT = getSheetHeight(params.unitSystem);
+  const CUT_MARGIN = getCutMargin(params.unitSystem);
+
+  const { partsByThickness, oversizedParts } = processParts(parts, SHEET_WIDTH, SHEET_HEIGHT);
   const sheets: SheetLayout[] = [];
   
   for (const [thickness, thicknessParts] of partsByThickness) {
@@ -265,10 +301,12 @@ export function generateSheetLayouts(parts: Part[]): SheetLayoutResult {
     let remainingParts = [...thicknessParts];
     
     while (remainingParts.length > 0) {
-      const thicknessLabel = toFraction32(thickness);
+      const thicknessLabel = params.unitSystem === 'metric'
+        ? `${Math.round(thickness * 25.4)}mm`
+        : toFraction32(thickness);
       const sheetId = `${thicknessLabel} Sheet ${sheetNumber}`;
-      
-      const sheet = packSheet(remainingParts, sheetId, thickness);
+
+      const sheet = packSheet(remainingParts, sheetId, thickness, SHEET_WIDTH, SHEET_HEIGHT, CUT_MARGIN, params.unitSystem);
       sheets.push(sheet);
       
       // Remove placed parts from remaining parts
@@ -285,6 +323,6 @@ export function generateSheetLayouts(parts: Part[]): SheetLayoutResult {
 /**
  * Helper function to get just the sheets (for backward compatibility)
  */
-export function getSheetLayouts(parts: Part[]): SheetLayout[] {
-  return generateSheetLayouts(parts).sheets;
+export function getSheetLayouts(parts: Part[], params: DesignParams): SheetLayout[] {
+  return generateSheetLayouts(parts, params).sheets;
 }
