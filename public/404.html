@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+  <script>
+    var path = window.location.pathname.replace('/kallax-configurator', '') || '/';
+    var search = window.location.search;
+    var hash = window.location.hash;
+    window.location.replace('https://kallax.adamvosburgh.com' + path + search + hash);
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=https://kallax.adamvosburgh.com">
+  </noscript>
+</head>
+<body>
+  <p>Redirecting to <a href="https://kallax.adamvosburgh.com">kallax.adamvosburgh.com</a>...</p>
+</body>
+</html>
